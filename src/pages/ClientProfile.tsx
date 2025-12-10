@@ -1,13 +1,21 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { mockClients } from "@/data/mockClients";
+import { useQuery } from "@tanstack/react-query";
+import { useClients } from "@/contexts/ClientsContext";
+import { useSubscriptions } from "@/contexts/SubscriptionsContext";
+import { clientsService } from "@/services/clientsService";
+import { subscriptionsService } from "@/services/subscriptionsService";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CredentialsSection } from "@/components/CredentialsSection";
-import { ArrowLeft, Edit, Save, X } from "lucide-react";
+import { EditClientDialog } from "@/components/EditClientDialog";
+import { DeleteClientDialog } from "@/components/DeleteClientDialog";
+import { SubscriptionsTable } from "@/components/SubscriptionsTable";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { ClientStatus } from "@/types/client";
 
 const statusColors: Record<ClientStatus, string> = {
@@ -20,16 +28,53 @@ const statusColors: Record<ClientStatus, string> = {
 export default function ClientProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
-  
-  const client = mockClients.find((c) => c.id === id);
+  const { editClient, deleteClient } = useClients();
+  const { addSubscription, editSubscription, deleteSubscription, markAsPaid } = useSubscriptions();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  if (!client) {
+  const {
+    data: client,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["client", id],
+    queryFn: () => clientsService.getById(id!),
+    enabled: !!id,
+  });
+
+  const {
+    data: clientSubscriptions = [],
+    isLoading: isLoadingSubscriptions,
+  } = useQuery({
+    queryKey: ["subscriptions", id],
+    queryFn: () => subscriptionsService.getByClientId(id!),
+    enabled: !!id,
+  });
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto max-w-6xl py-8">
+          <div className="mb-6">
+            <Skeleton className="h-10 w-64 mb-4" />
+            <Skeleton className="h-8 w-48" />
+          </div>
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !client) {
     return (
       <Layout>
         <div className="flex min-h-screen items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold">Cliente não encontrado</h1>
+            <p className="text-muted-foreground mt-2">
+              {error ? "Erro ao carregar cliente" : "O cliente solicitado não existe"}
+            </p>
             <Button onClick={() => navigate("/")} className="mt-4">
               Voltar para lista
             </Button>
@@ -57,31 +102,30 @@ export default function ClientProfile() {
             </Badge>
           </div>
           <div className="flex gap-2">
-            {isEditing ? (
-              <>
-                <Button variant="outline" onClick={() => setIsEditing(false)}>
-                  <X className="mr-2 h-4 w-4" />
-                  Cancelar
-                </Button>
-                <Button onClick={() => setIsEditing(false)}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Salvar
-                </Button>
-              </>
-            ) : (
-              <Button onClick={() => setIsEditing(true)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Editar
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(true)}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Editar
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Remover
+            </Button>
           </div>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="personal" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="personal">Dados Pessoais</TabsTrigger>
             <TabsTrigger value="company">Dados da Empresa</TabsTrigger>
+            <TabsTrigger value="subscriptions">Mensalidades</TabsTrigger>
             <TabsTrigger value="credentials">Credenciais da Infra</TabsTrigger>
           </TabsList>
 
@@ -195,14 +239,63 @@ export default function ClientProfile() {
             </Card>
           </TabsContent>
 
+          {/* Mensalidades */}
+          <TabsContent value="subscriptions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Mensalidades</CardTitle>
+                <CardDescription>
+                  Gerencie as mensalidades e pagamentos deste cliente
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingSubscriptions ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                  </div>
+                ) : (
+                  <SubscriptionsTable
+                    subscriptions={clientSubscriptions}
+                    clientId={client.id}
+                    onAddSubscription={addSubscription}
+                    onEditSubscription={editSubscription}
+                    onDeleteSubscription={deleteSubscription}
+                    onMarkAsPaid={markAsPaid}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Credenciais */}
           <TabsContent value="credentials" className="space-y-4">
             <CredentialsSection
               credentials={client.infraCredentials}
-              isEditing={isEditing}
+              isEditing={false}
             />
           </TabsContent>
         </Tabs>
+
+        <EditClientDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          client={client || null}
+          onSave={(id, data) => {
+            editClient(id, data);
+            setIsEditDialogOpen(false);
+          }}
+        />
+
+        <DeleteClientDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          client={client || null}
+          onConfirm={(id) => {
+            deleteClient(id);
+            navigate("/");
+          }}
+        />
       </div>
     </Layout>
   );

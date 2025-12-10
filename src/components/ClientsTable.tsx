@@ -19,10 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Edit, Trash2 } from "lucide-react";
+import { NewClientDialog } from "@/components/NewClientDialog";
+import { EditClientDialog } from "@/components/EditClientDialog";
+import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 
 interface ClientsTableProps {
   clients: Client[];
+  onAddClient: (client: Omit<Client, "id" | "createdAt" | "updatedAt">) => void;
+  onEditClient: (id: string, clientData: Partial<Client>) => void;
+  onDeleteClient: (id: string) => void;
 }
 
 const statusColors: Record<ClientStatus, string> = {
@@ -32,10 +38,14 @@ const statusColors: Record<ClientStatus, string> = {
   Encerrado: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300",
 };
 
-export function ClientsTable({ clients }: ClientsTableProps) {
+export function ClientsTable({ clients, onAddClient, onEditClient, onDeleteClient }: ClientsTableProps) {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false);
+  const [isEditClientDialogOpen, setIsEditClientDialogOpen] = useState(false);
+  const [isDeleteClientDialogOpen, setIsDeleteClientDialogOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const filteredClients = clients.filter((client) => {
     const matchesSearch =
@@ -70,14 +80,14 @@ export function ClientsTable({ clients }: ClientsTableProps) {
             <SelectItem value="Encerrado">Encerrado</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={() => navigate("/clients/new")} className="gap-2">
+        <Button onClick={() => setIsNewClientDialogOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Novo Cliente
         </Button>
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-border bg-card shadow-sm">
+      <div className="rounded-lg border border-border bg-card/95 shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
@@ -96,10 +106,12 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredClients.map((client) => (
+              filteredClients.map((client, index) => (
                 <TableRow
                   key={client.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className={`cursor-pointer hover:bg-muted/70 ${
+                    index % 2 === 0 ? "bg-card" : "bg-muted/30"
+                  }`}
                   onClick={() => navigate(`/clients/${client.id}`)}
                 >
                   <TableCell className="font-medium">{client.fullName}</TableCell>
@@ -111,16 +123,41 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{client.phone}</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/clients/${client.id}`);
-                      }}
-                    >
-                      Ver detalhes
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/clients/${client.id}`);
+                        }}
+                      >
+                        Ver detalhes
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedClient(client);
+                          setIsEditClientDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedClient(client);
+                          setIsDeleteClientDialogOpen(true);
+                        }}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -128,6 +165,26 @@ export function ClientsTable({ clients }: ClientsTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      <NewClientDialog
+        open={isNewClientDialogOpen}
+        onOpenChange={setIsNewClientDialogOpen}
+        onSave={onAddClient}
+      />
+
+      <EditClientDialog
+        open={isEditClientDialogOpen}
+        onOpenChange={setIsEditClientDialogOpen}
+        client={selectedClient}
+        onSave={onEditClient}
+      />
+
+      <DeleteClientDialog
+        open={isDeleteClientDialogOpen}
+        onOpenChange={setIsDeleteClientDialogOpen}
+        client={selectedClient}
+        onConfirm={onDeleteClient}
+      />
     </div>
   );
 }
