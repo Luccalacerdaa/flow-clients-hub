@@ -119,8 +119,8 @@ export default function Subscriptions() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container mx-auto py-8">
-          <div className="mb-8">
+        <div className="container mx-auto py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
+          <div className="mb-6 sm:mb-8">
             <Skeleton className="h-9 w-48 mb-2" />
             <Skeleton className="h-5 w-64" />
           </div>
@@ -135,17 +135,18 @@ export default function Subscriptions() {
 
   return (
     <Layout>
-      <div className="container mx-auto py-8">
-        <div className="mb-8 flex items-center justify-between">
+      <div className="container mx-auto py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Mensalidades</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Mensalidades</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
               Gerencie todas as mensalidades e pagamentos dos clientes
             </p>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
+          <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2 w-full sm:w-auto">
             <Plus className="h-4 w-4" />
-            Adicionar Cliente + Mensalidade
+            <span className="hidden sm:inline">Adicionar Cliente + Mensalidade</span>
+            <span className="sm:hidden">Adicionar</span>
           </Button>
         </div>
         <SubscriptionsTable

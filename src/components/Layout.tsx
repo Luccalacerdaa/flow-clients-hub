@@ -1,7 +1,15 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Building2, Users, CreditCard, BarChart3 } from "lucide-react";
+import { Users, CreditCard, BarChart3, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { FlowTechLogo } from "@/components/FlowTechLogo";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 interface LayoutProps {
   children: ReactNode;
@@ -9,67 +17,104 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const isMobile = useIsMobile();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   const isClientsPage = location.pathname === "/" || location.pathname.startsWith("/clients");
   const isSubscriptionsPage = location.pathname === "/subscriptions" || location.pathname.startsWith("/subscriptions/");
   const isReportsPage = location.pathname === "/reports";
 
+  const NavLinks = () => (
+    <>
+      <Link
+        to="/"
+        onClick={() => setMobileMenuOpen(false)}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+          isClientsPage
+            ? "bg-accent text-accent-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        )}
+      >
+        <Users className="h-4 w-4" />
+        Clientes
+      </Link>
+      <Link
+        to="/subscriptions"
+        onClick={() => setMobileMenuOpen(false)}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+          isSubscriptionsPage
+            ? "bg-accent text-accent-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        )}
+      >
+        <CreditCard className="h-4 w-4" />
+        Mensalidades
+      </Link>
+      <Link
+        to="/reports"
+        onClick={() => setMobileMenuOpen(false)}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+          isReportsPage
+            ? "bg-accent text-accent-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        )}
+      >
+        <BarChart3 className="h-4 w-4" />
+        Relatórios
+      </Link>
+    </>
+  );
+
   return (
     <div className="flex min-h-screen w-full bg-background">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-card/95 backdrop-blur-sm">
-        <div className="flex h-16 items-center gap-3 border-b border-border px-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
-            <Building2 className="h-5 w-5 text-accent-foreground" />
+      {/* Mobile Header */}
+      {isMobile && (
+        <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b border-border bg-card/95 backdrop-blur-sm lg:hidden">
+          <div className="flex h-full items-center justify-between px-4">
+            <FlowTechLogo size="sm" />
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Abrir menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-0">
+                <div className="flex h-16 items-center gap-3 border-b border-border px-6">
+                  <FlowTechLogo size="sm" />
+                </div>
+                <nav className="p-4 space-y-1">
+                  <NavLinks />
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">Flow Tech</h1>
-            <p className="text-xs text-muted-foreground">Gestão de Clientes</p>
+        </header>
+      )}
+
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <aside className="hidden w-64 border-r border-border bg-card/95 backdrop-blur-sm lg:block">
+          <div className="flex h-16 items-center gap-3 border-b border-border px-6">
+            <FlowTechLogo size="sm" />
           </div>
-        </div>
-        
-        <nav className="p-4 space-y-1">
-          <Link
-            to="/"
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              isClientsPage
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            <Users className="h-4 w-4" />
-            Clientes
-          </Link>
-          <Link
-            to="/subscriptions"
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              isSubscriptionsPage
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            <CreditCard className="h-4 w-4" />
-            Mensalidades
-          </Link>
-          <Link
-            to="/reports"
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              isReportsPage
-                ? "bg-accent text-accent-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            <BarChart3 className="h-4 w-4" />
-            Relatórios
-          </Link>
-        </nav>
-      </aside>
+          <nav className="p-4 space-y-1">
+            <NavLinks />
+          </nav>
+        </aside>
+      )}
 
       {/* Main content */}
-      <main className="flex-1">
-        {children}
+      <main className={cn(
+        "flex-1 w-full",
+        isMobile && "pt-16"
+      )}>
+        <div className="h-full w-full overflow-auto">
+          {children}
+        </div>
       </main>
     </div>
   );

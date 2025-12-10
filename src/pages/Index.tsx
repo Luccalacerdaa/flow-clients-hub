@@ -25,10 +25,10 @@ const Index = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Clientes</h1>
-          <p className="text-muted-foreground">Gerencie todos os clientes da Flow Tech</p>
+      <div className="container mx-auto py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Clientes</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">Gerencie todos os clientes da Flow Tech</p>
         </div>
         <ClientsTable
           clients={clients}
