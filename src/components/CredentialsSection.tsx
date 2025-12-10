@@ -86,79 +86,53 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Admin URL</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.n8n.adminUrl}
-                onChange={(e) => handleChange("n8n", "adminUrl", e.target.value)}
-                placeholder="https://n8n-cliente.flowtech.cloud"
-              />
-            ) : (
-              <div className="flex items-center gap-2">
-                <Input value={credentials?.n8n?.adminUrl || ""} readOnly />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => copyToClipboard(credentials?.n8n?.adminUrl || "", "URL")}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <Input value={credentials.n8n?.adminUrl || ""} readOnly />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => copyToClipboard(credentials.n8n?.adminUrl || "", "URL")}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Email</Label>
-            {isEditing ? (
-              <Input
-                type="email"
-                value={localCredentials.n8n?.email || ""}
-                onChange={(e) => handleChange("n8n", "email", e.target.value)}
-                placeholder="admin@cliente.com"
-              />
-            ) : (
-              <div className="flex items-center gap-2">
-                <Input value={credentials?.n8n?.email || ""} readOnly />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => copyToClipboard(credentials?.n8n?.email || "", "Email")}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <Input value={credentials.n8n?.email || ""} readOnly />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => copyToClipboard(credentials.n8n?.email || "", "Email")}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Password</Label>
-            {isEditing ? (
+            <div className="flex items-center gap-2">
               <Input
                 type={showPasswords["n8n"] ? "text" : "password"}
-                value={localCredentials.n8n?.password || ""}
-                onChange={(e) => handleChange("n8n", "password", e.target.value)}
-                placeholder="••••••••"
+                value={credentials.n8n?.password || ""}
+                readOnly
               />
-            ) : (
-              <div className="flex items-center gap-2">
-                <Input
-                  type={showPasswords["n8n"] ? "text" : "password"}
-                  value={credentials?.n8n?.password || ""}
-                  readOnly
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => togglePasswordVisibility("n8n")}
-                >
-                  {showPasswords["n8n"] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => copyToClipboard(credentials?.n8n?.password || "", "Password")}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => togglePasswordVisibility("n8n")}
+              >
+                {showPasswords["n8n"] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => copyToClipboard(credentials.n8n?.password || "", "Password")}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -179,7 +153,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
             <div className="space-y-2">
               <Label>URL</Label>
               <div className="flex items-center gap-2">
-                <Input value={credentials.cloudfy.url || ""} readOnly />
+                <Input value={credentials.cloudfy?.url || ""} readOnly />
                 <Button
                   variant="outline"
                   size="icon"
@@ -192,7 +166,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
             <div className="space-y-2">
               <Label>Email</Label>
               <div className="flex items-center gap-2">
-                <Input value={credentials.cloudfy.email || ""} readOnly />
+                <Input value={credentials.cloudfy?.email || ""} readOnly />
                 <Button
                   variant="outline"
                   size="icon"
@@ -207,7 +181,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
               <div className="flex items-center gap-2">
                 <Input
                   type={showPasswords["cloudfy"] ? "text" : "password"}
-                  value={credentials.cloudfy.password || ""}
+                  value={credentials.cloudfy?.password || ""}
                   readOnly
                 />
                 <Button
@@ -245,7 +219,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
             <div className="space-y-2">
               <Label>Manager URL</Label>
               <div className="flex items-center gap-2">
-                <Input value={credentials.evolution.managerUrl || ""} readOnly />
+                <Input value={credentials.evolution?.managerUrl || ""} readOnly />
                 <Button
                   variant="outline"
                   size="icon"
@@ -258,7 +232,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
             <div className="space-y-2">
               <Label>API Key</Label>
               <div className="flex items-center gap-2">
-                <Input value={credentials.evolution.apiKey || ""} readOnly className="font-mono text-sm" />
+                <Input value={credentials.evolution?.apiKey || ""} readOnly className="font-mono text-sm" />
                 <Button
                   variant="outline"
                   size="icon"
@@ -268,7 +242,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
                 </Button>
               </div>
             </div>
-            {credentials.evolution.instanceName && (
+            {credentials.evolution?.instanceName && (
               <div className="space-y-2">
                 <Label>Nome da Instância</Label>
                 <Input value={credentials.evolution.instanceName} readOnly />
@@ -293,7 +267,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
             <div className="space-y-2">
               <Label>Project URL</Label>
               <div className="flex items-center gap-2">
-                <Input value={credentials.supabase.projectUrl || ""} readOnly className="font-mono text-sm" />
+                <Input value={credentials.supabase?.projectUrl || ""} readOnly className="font-mono text-sm" />
                 <Button
                   variant="outline"
                   size="icon"
@@ -306,7 +280,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
             <div className="space-y-2">
               <Label>Anon Key</Label>
               <div className="flex items-center gap-2">
-                <Input value={credentials.supabase.anonKey || ""} readOnly className="font-mono text-sm" />
+                <Input value={credentials.supabase?.anonKey || ""} readOnly className="font-mono text-sm" />
                 <Button
                   variant="outline"
                   size="icon"
@@ -316,7 +290,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
                 </Button>
               </div>
             </div>
-            {credentials.supabase.serviceRoleKey && (
+            {credentials.supabase?.serviceRoleKey && (
               <div className="space-y-2">
                 <Label>Service Role Key</Label>
                 <div className="flex items-center gap-2">
@@ -364,7 +338,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
               <div className="flex items-center gap-2">
                 <Input
                   type={showPasswords["chatgpt"] ? "text" : "password"}
-                  value={credentials.chatgpt.apiKey || ""}
+                  value={credentials.chatgpt?.apiKey || ""}
                   readOnly
                   className="font-mono text-sm"
                 />
@@ -384,7 +358,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
                 </Button>
               </div>
             </div>
-            {credentials.chatgpt.organizationId && (
+            {credentials.chatgpt?.organizationId && (
               <div className="space-y-2">
                 <Label>Organization ID</Label>
                 <div className="flex items-center gap-2">
