@@ -50,12 +50,21 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
     if (onUpdate) onUpdate(updated);
   };
 
-  if (!credentials && !isEditing) {
+  // Verificar se há alguma credencial cadastrada
+  const hasCredentials = credentials && (
+    credentials.n8n ||
+    credentials.cloudfy ||
+    credentials.evolution ||
+    credentials.supabase ||
+    credentials.chatgpt
+  );
+
+  if (!hasCredentials && !isEditing) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Credenciais da Infraestrutura</CardTitle>
-          <CardDescription>Nenhuma credencial cadastrada ainda.</CardDescription>
+          <CardDescription>Nenhuma credencial cadastrada ainda. Edite o cliente para adicionar credenciais.</CardDescription>
         </CardHeader>
       </Card>
     );
