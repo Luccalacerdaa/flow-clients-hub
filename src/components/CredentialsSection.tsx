@@ -18,11 +18,6 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [localCredentials, setLocalCredentials] = useState<InfraCredentials>(
     credentials || {
-      n8n: { adminUrl: "", email: "", password: "" },
-      evolutionApi: { managerUrl: "", apiKey: "" },
-      chatwoot: { adminUrl: "", password: "" },
-      redis: { host: "", port: "", user: "", password: "" },
-      postgresql: { host: "", port: "", user: "", database: "", password: "" },
       notes: "",
     }
   );
@@ -40,15 +35,15 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
     const updated = { ...localCredentials };
     
     if (section === "n8n") {
-      updated.n8n = { ...updated.n8n, [field]: value };
-    } else if (section === "evolutionApi") {
-      updated.evolutionApi = { ...updated.evolutionApi, [field]: value };
-    } else if (section === "chatwoot") {
-      updated.chatwoot = { ...updated.chatwoot, [field]: value };
-    } else if (section === "redis") {
-      updated.redis = { ...updated.redis, [field]: value };
-    } else if (section === "postgresql") {
-      updated.postgresql = { ...updated.postgresql, [field]: value };
+      updated.n8n = { ...(updated.n8n || { adminUrl: "", email: "", password: "" }), [field]: value };
+    } else if (section === "cloudfy") {
+      updated.cloudfy = { ...(updated.cloudfy || { url: "", email: "", password: "" }), [field]: value };
+    } else if (section === "evolution") {
+      updated.evolution = { ...(updated.evolution || { managerUrl: "", apiKey: "" }), [field]: value };
+    } else if (section === "supabase") {
+      updated.supabase = { ...(updated.supabase || { projectUrl: "", anonKey: "" }), [field]: value };
+    } else if (section === "chatgpt") {
+      updated.chatgpt = { ...(updated.chatgpt || { apiKey: "" }), [field]: value };
     }
     
     setLocalCredentials(updated);
@@ -69,15 +64,16 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
   return (
     <div className="space-y-6">
       {/* n8n */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-accent text-accent-foreground text-sm font-semibold">
+      {credentials?.n8n && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded bg-accent text-accent-foreground text-sm font-semibold">
+                n8n
+              </div>
               n8n
-            </div>
-            n8n
-          </CardTitle>
-        </CardHeader>
+            </CardTitle>
+          </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Admin URL</Label>
@@ -89,11 +85,11 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
               />
             ) : (
               <div className="flex items-center gap-2">
-                <Input value={credentials?.n8n.adminUrl} readOnly />
+                <Input value={credentials?.n8n?.adminUrl || ""} readOnly />
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => copyToClipboard(credentials?.n8n.adminUrl || "", "URL")}
+                  onClick={() => copyToClipboard(credentials?.n8n?.adminUrl || "", "URL")}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -105,17 +101,17 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
             {isEditing ? (
               <Input
                 type="email"
-                value={localCredentials.n8n.email}
+                value={localCredentials.n8n?.email || ""}
                 onChange={(e) => handleChange("n8n", "email", e.target.value)}
                 placeholder="admin@cliente.com"
               />
             ) : (
               <div className="flex items-center gap-2">
-                <Input value={credentials?.n8n.email} readOnly />
+                <Input value={credentials?.n8n?.email || ""} readOnly />
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => copyToClipboard(credentials?.n8n.email || "", "Email")}
+                  onClick={() => copyToClipboard(credentials?.n8n?.email || "", "Email")}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -127,7 +123,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
             {isEditing ? (
               <Input
                 type={showPasswords["n8n"] ? "text" : "password"}
-                value={localCredentials.n8n.password}
+                value={localCredentials.n8n?.password || ""}
                 onChange={(e) => handleChange("n8n", "password", e.target.value)}
                 placeholder="••••••••"
               />
@@ -135,7 +131,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
               <div className="flex items-center gap-2">
                 <Input
                   type={showPasswords["n8n"] ? "text" : "password"}
-                  value={credentials?.n8n.password}
+                  value={credentials?.n8n?.password || ""}
                   readOnly
                 />
                 <Button
@@ -148,7 +144,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => copyToClipboard(credentials?.n8n.password || "", "Password")}
+                  onClick={() => copyToClipboard(credentials?.n8n?.password || "", "Password")}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -157,314 +153,245 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
           </div>
         </CardContent>
       </Card>
+
+      {/* Cloudfy */}
+      {credentials?.cloudfy && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded bg-accent text-accent-foreground text-sm font-semibold">
+                CF
+              </div>
+              Cloudfy
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>URL</Label>
+              <div className="flex items-center gap-2">
+                <Input value={credentials.cloudfy.url || ""} readOnly />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => copyToClipboard(credentials.cloudfy?.url || "", "URL")}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <div className="flex items-center gap-2">
+                <Input value={credentials.cloudfy.email || ""} readOnly />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => copyToClipboard(credentials.cloudfy?.email || "", "Email")}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type={showPasswords["cloudfy"] ? "text" : "password"}
+                  value={credentials.cloudfy.password || ""}
+                  readOnly
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => togglePasswordVisibility("cloudfy")}
+                >
+                  {showPasswords["cloudfy"] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => copyToClipboard(credentials.cloudfy?.password || "", "Password")}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Evolution API */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-accent text-accent-foreground text-sm font-semibold">
-              EVO
+      {credentials?.evolution && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded bg-accent text-accent-foreground text-sm font-semibold">
+                EVO
+              </div>
+              Evolution API
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Manager URL</Label>
+              <div className="flex items-center gap-2">
+                <Input value={credentials.evolution.managerUrl || ""} readOnly />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => copyToClipboard(credentials.evolution?.managerUrl || "", "URL")}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            Evolution API
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Manager URL</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.evolutionApi.managerUrl}
-                onChange={(e) => handleChange("evolutionApi", "managerUrl", e.target.value)}
-                placeholder="https://evolution-cliente.flowtech.cloud"
-              />
-            ) : (
+            <div className="space-y-2">
+              <Label>API Key</Label>
               <div className="flex items-center gap-2">
-                <Input value={credentials?.evolutionApi.managerUrl} readOnly />
+                <Input value={credentials.evolution.apiKey || ""} readOnly className="font-mono text-sm" />
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => copyToClipboard(credentials?.evolutionApi.managerUrl || "", "URL")}
+                  onClick={() => copyToClipboard(credentials.evolution?.apiKey || "", "API Key")}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label>API Key</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.evolutionApi.apiKey}
-                onChange={(e) => handleChange("evolutionApi", "apiKey", e.target.value)}
-                placeholder="evo_1234567890abcdef"
-              />
-            ) : (
-              <div className="flex items-center gap-2">
-                <Input value={credentials?.evolutionApi.apiKey} readOnly className="font-mono text-sm" />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => copyToClipboard(credentials?.evolutionApi.apiKey || "", "API Key")}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+            </div>
+            {credentials.evolution.instanceName && (
+              <div className="space-y-2">
+                <Label>Nome da Instância</Label>
+                <Input value={credentials.evolution.instanceName} readOnly />
               </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Chatwoot */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-accent text-accent-foreground text-sm font-semibold">
-              CW
+      {/* Supabase */}
+      {credentials?.supabase && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground text-sm font-semibold">
+                SB
+              </div>
+              Supabase
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Project URL</Label>
+              <div className="flex items-center gap-2">
+                <Input value={credentials.supabase.projectUrl || ""} readOnly className="font-mono text-sm" />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => copyToClipboard(credentials.supabase?.projectUrl || "", "URL")}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            Chatwoot
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Admin URL</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.chatwoot.adminUrl}
-                onChange={(e) => handleChange("chatwoot", "adminUrl", e.target.value)}
-                placeholder="https://chatwoot-cliente.flowtech.cloud"
-              />
-            ) : (
+            <div className="space-y-2">
+              <Label>Anon Key</Label>
               <div className="flex items-center gap-2">
-                <Input value={credentials?.chatwoot.adminUrl} readOnly />
+                <Input value={credentials.supabase.anonKey || ""} readOnly className="font-mono text-sm" />
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => copyToClipboard(credentials?.chatwoot.adminUrl || "", "URL")}
+                  onClick={() => copyToClipboard(credentials.supabase?.anonKey || "", "Anon Key")}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label>Password / Instruções</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.chatwoot.password}
-                onChange={(e) => handleChange("chatwoot", "password", e.target.value)}
-                placeholder="Criar conta no primeiro login"
-              />
-            ) : (
-              <div className="flex items-center gap-2">
-                <Input value={credentials?.chatwoot.password} readOnly />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => copyToClipboard(credentials?.chatwoot.password || "", "Password")}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+            </div>
+            {credentials.supabase.serviceRoleKey && (
+              <div className="space-y-2">
+                <Label>Service Role Key</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type={showPasswords["supabase"] ? "text" : "password"}
+                    value={credentials.supabase.serviceRoleKey}
+                    readOnly
+                    className="font-mono text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => togglePasswordVisibility("supabase")}
+                  >
+                    {showPasswords["supabase"] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(credentials.supabase?.serviceRoleKey || "", "Service Key")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Redis */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-destructive text-destructive-foreground text-sm font-semibold">
-              R
-            </div>
-            Redis
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Host</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.redis.host}
-                onChange={(e) => handleChange("redis", "host", e.target.value)}
-                placeholder="redis-cliente.flowtech.cloud"
-              />
-            ) : (
-              <div className="flex items-center gap-2">
-                <Input value={credentials?.redis.host} readOnly className="font-mono text-sm" />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => copyToClipboard(credentials?.redis.host || "", "Host")}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+      {/* ChatGPT */}
+      {credentials?.chatgpt && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded bg-accent text-accent-foreground text-sm font-semibold">
+                GPT
               </div>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label>Port</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.redis.port}
-                onChange={(e) => handleChange("redis", "port", e.target.value)}
-                placeholder="6379"
-              />
-            ) : (
-              <Input value={credentials?.redis.port} readOnly />
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label>User</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.redis.user}
-                onChange={(e) => handleChange("redis", "user", e.target.value)}
-                placeholder="cliente"
-              />
-            ) : (
-              <Input value={credentials?.redis.user} readOnly />
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label>Password</Label>
-            {isEditing ? (
-              <Input
-                type={showPasswords["redis"] ? "text" : "password"}
-                value={localCredentials.redis.password}
-                onChange={(e) => handleChange("redis", "password", e.target.value)}
-                placeholder="••••••••"
-              />
-            ) : (
+              ChatGPT
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>API Key</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  type={showPasswords["redis"] ? "text" : "password"}
-                  value={credentials?.redis.password}
+                  type={showPasswords["chatgpt"] ? "text" : "password"}
+                  value={credentials.chatgpt.apiKey || ""}
                   readOnly
+                  className="font-mono text-sm"
                 />
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => togglePasswordVisibility("redis")}
+                  onClick={() => togglePasswordVisibility("chatgpt")}
                 >
-                  {showPasswords["redis"] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPasswords["chatgpt"] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => copyToClipboard(credentials?.redis.password || "", "Password")}
+                  onClick={() => copyToClipboard(credentials.chatgpt?.apiKey || "", "API Key")}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* PostgreSQL */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground text-sm font-semibold">
-              PG
             </div>
-            PostgreSQL
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Host</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.postgresql.host}
-                onChange={(e) => handleChange("postgresql", "host", e.target.value)}
-                placeholder="postgres-cliente.flowtech.cloud"
-              />
-            ) : (
-              <div className="flex items-center gap-2">
-                <Input value={credentials?.postgresql.host} readOnly className="font-mono text-sm" />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => copyToClipboard(credentials?.postgresql.host || "", "Host")}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+            {credentials.chatgpt.organizationId && (
+              <div className="space-y-2">
+                <Label>Organization ID</Label>
+                <div className="flex items-center gap-2">
+                  <Input value={credentials.chatgpt.organizationId} readOnly className="font-mono text-sm" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(credentials.chatgpt?.organizationId || "", "Org ID")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
-          </div>
-          <div className="space-y-2">
-            <Label>Port</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.postgresql.port}
-                onChange={(e) => handleChange("postgresql", "port", e.target.value)}
-                placeholder="5432"
-              />
-            ) : (
-              <Input value={credentials?.postgresql.port} readOnly />
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label>User</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.postgresql.user}
-                onChange={(e) => handleChange("postgresql", "user", e.target.value)}
-                placeholder="cliente"
-              />
-            ) : (
-              <Input value={credentials?.postgresql.user} readOnly />
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label>Database</Label>
-            {isEditing ? (
-              <Input
-                value={localCredentials.postgresql.database}
-                onChange={(e) => handleChange("postgresql", "database", e.target.value)}
-                placeholder="cliente_db"
-              />
-            ) : (
-              <Input value={credentials?.postgresql.database} readOnly />
-            )}
-          </div>
-          <div className="col-span-2 space-y-2">
-            <Label>Password</Label>
-            {isEditing ? (
-              <Input
-                type={showPasswords["postgresql"] ? "text" : "password"}
-                value={localCredentials.postgresql.password}
-                onChange={(e) => handleChange("postgresql", "password", e.target.value)}
-                placeholder="••••••••"
-              />
-            ) : (
-              <div className="flex items-center gap-2">
-                <Input
-                  type={showPasswords["postgresql"] ? "text" : "password"}
-                  value={credentials?.postgresql.password}
-                  readOnly
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => togglePasswordVisibility("postgresql")}
-                >
-                  {showPasswords["postgresql"] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => copyToClipboard(credentials?.postgresql.password || "", "Password")}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Notes */}
       <Card>
