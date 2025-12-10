@@ -10,6 +10,7 @@ import ClientProfile from "./pages/ClientProfile";
 import Subscriptions from "./pages/Subscriptions";
 import SubscriptionDetails from "./pages/SubscriptionDetails";
 import FinancialReports from "./pages/FinancialReports";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,7 +24,8 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/clients" element={<Index />} />
               <Route path="/clients/:id" element={<ClientProfile />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
               <Route path="/subscriptions/:id" element={<SubscriptionDetails />} />

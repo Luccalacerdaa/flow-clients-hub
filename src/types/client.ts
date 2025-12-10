@@ -2,26 +2,45 @@ export type ClientStatus = "Lead" | "Ativo" | "Pausado" | "Encerrado";
 export type CompanySize = "Pequena" | "Média" | "Grande";
 
 export interface InfraCredentials {
-  n8n: {
+  n8n?: {
     adminUrl: string;
     email: string;
     password: string;
   };
-  evolutionApi: {
+  cloudfy?: {
+    url: string;
+    email: string;
+    password: string;
+  };
+  evolution?: {
+    managerUrl: string;
+    apiKey: string;
+    instanceName?: string;
+  };
+  supabase?: {
+    projectUrl: string;
+    anonKey: string;
+    serviceRoleKey?: string;
+  };
+  chatgpt?: {
+    apiKey: string;
+    organizationId?: string;
+  };
+  evolutionApi?: {
     managerUrl: string;
     apiKey: string;
   };
-  chatwoot: {
+  chatwoot?: {
     adminUrl: string;
     password: string;
   };
-  redis: {
+  redis?: {
     host: string;
     port: string;
     user: string;
     password: string;
   };
-  postgresql: {
+  postgresql?: {
     host: string;
     port: string;
     user: string;
@@ -36,7 +55,9 @@ export interface Client {
   // Dados pessoais
   fullName: string;
   email: string;
+  emails?: string[]; // Emails adicionais para automações
   phone: string;
+  phones?: string[]; // Telefones adicionais para automações
   position: string;
   personalNotes?: string;
   

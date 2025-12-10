@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Users, CreditCard, BarChart3, Menu } from "lucide-react";
+import { Users, CreditCard, BarChart3, Menu, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FlowTechLogo } from "@/components/FlowTechLogo";
@@ -20,7 +20,8 @@ export function Layout({ children }: LayoutProps) {
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  const isClientsPage = location.pathname === "/" || location.pathname.startsWith("/clients");
+  const isDashboardPage = location.pathname === "/";
+  const isClientsPage = location.pathname === "/clients" || location.pathname.startsWith("/clients/");
   const isSubscriptionsPage = location.pathname === "/subscriptions" || location.pathname.startsWith("/subscriptions/");
   const isReportsPage = location.pathname === "/reports";
 
@@ -28,6 +29,19 @@ export function Layout({ children }: LayoutProps) {
     <>
       <Link
         to="/"
+        onClick={() => setMobileMenuOpen(false)}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+          isDashboardPage
+            ? "bg-accent text-accent-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        )}
+      >
+        <LayoutDashboard className="h-4 w-4" />
+        Dashboard
+      </Link>
+      <Link
+        to="/clients"
         onClick={() => setMobileMenuOpen(false)}
         className={cn(
           "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",

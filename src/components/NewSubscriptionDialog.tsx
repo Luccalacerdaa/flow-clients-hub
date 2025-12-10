@@ -157,8 +157,16 @@ export function NewSubscriptionDialog({
                       type="number"
                       step="0.01"
                       placeholder="0.00"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      value={field.value === 0 ? "" : field.value}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || value === null || value === undefined) {
+                          field.onChange(0);
+                        } else {
+                          const numValue = parseFloat(value);
+                          field.onChange(isNaN(numValue) ? 0 : numValue);
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -312,8 +320,16 @@ export function NewSubscriptionDialog({
                         type="number"
                         step="0.01"
                         placeholder="0.00"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        value={field.value === 0 ? "" : field.value}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || value === null || value === undefined) {
+                            field.onChange(0);
+                          } else {
+                            const numValue = parseFloat(value);
+                            field.onChange(isNaN(numValue) ? 0 : numValue);
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
