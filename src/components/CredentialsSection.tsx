@@ -162,6 +162,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Cloudfy */}
       {credentials?.cloudfy && (
