@@ -52,6 +52,57 @@ export function NotificationSettings() {
     }
   };
 
+  const handleTestNotification = () => {
+    if (!status.enabled) {
+      toast.error("Ative as notificações primeiro");
+      return;
+    }
+
+    // Notificação imediata
+    if ('serviceWorker' in navigator && 'Notification' in window) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.showNotification('🧪 Teste Imediato - FlowTech', {
+          body: 'Esta é uma notificação de teste imediata!',
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          tag: 'test-immediate',
+          requireInteraction: false
+        });
+      });
+    }
+
+    // Notificação em 1 minuto
+    setTimeout(() => {
+      if ('serviceWorker' in navigator && 'Notification' in window) {
+        navigator.serviceWorker.ready.then((registration) => {
+          registration.showNotification('⏰ Teste 1 Minuto - FlowTech', {
+            body: 'Esta notificação foi agendada para 1 minuto! O sistema está funcionando.',
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            tag: 'test-1-minute',
+            requireInteraction: true,
+            actions: [
+              {
+                action: 'success',
+                title: '✅ Funcionou!'
+              },
+              {
+                action: 'dismiss',
+                title: 'Fechar'
+              }
+            ],
+            data: {
+              type: 'test-notification',
+              timestamp: new Date().toISOString()
+            }
+          });
+        });
+      }
+    }, 60000); // 1 minuto = 60000ms
+
+    toast.success("Teste iniciado! Você receberá 2 notificações: uma imediata e outra em 1 minuto.");
+  };
+
   const getStatusBadge = () => {
     if (!status.supported) {
       return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Não Suportado</Badge>;
@@ -162,7 +213,11 @@ export function NotificationSettings() {
               {isLoading ? "Ativando..." : "Ativar Notificações"}
             </Button>
           ) : (
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={handleTestNotification} className="gap-2 bg-blue-600 hover:bg-blue-700">
+                <Bell className="h-4 w-4" />
+                Testar Notificações (1min)
+              </Button>
               <Button variant="outline" onClick={handleClearNotifications} className="gap-2">
                 <BellOff className="h-4 w-4" />
                 Limpar Notificações

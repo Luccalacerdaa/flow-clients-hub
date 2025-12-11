@@ -122,7 +122,7 @@ export default function Subscriptions() {
 
   return (
     <Layout>
-      <div className="container mx-auto py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
+      <div className="py-4 sm:py-6 lg:py-8">
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Mensalidades</h1>

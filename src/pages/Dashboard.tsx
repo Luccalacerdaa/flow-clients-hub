@@ -183,7 +183,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="container mx-auto py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
+      <div className="py-4 sm:py-6 lg:py-8">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">

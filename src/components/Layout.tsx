@@ -96,18 +96,18 @@ export function Layout({ children }: LayoutProps) {
     <div className="flex min-h-screen w-full bg-background">
       {/* Mobile Header */}
       {isMobile && (
-        <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b border-border bg-card/95 backdrop-blur-sm lg:hidden">
-          <div className="flex h-full items-center justify-between px-4">
+        <header className="fixed top-0 left-0 right-0 z-40 h-14 sm:h-16 border-b border-border bg-card/95 backdrop-blur-sm lg:hidden">
+          <div className="flex h-full items-center justify-between px-3 sm:px-4">
             <FlowTechLogo size="sm" />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Dialog open={notificationDialogOpen} onOpenChange={setNotificationDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Bell className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+                    <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span className="sr-only">Configurações de notificação</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px]">
+                <DialogContent className="mx-4 sm:mx-0 sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Configurações de Notificação</DialogTitle>
                     <DialogDescription>
@@ -119,8 +119,8 @@ export function Layout({ children }: LayoutProps) {
               </Dialog>
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+                    <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span className="sr-only">Abrir menu</span>
                   </Button>
                 </SheetTrigger>
@@ -168,11 +168,13 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main content */}
       <main className={cn(
-        "flex-1 w-full",
-        isMobile && "pt-16"
+        "flex-1 w-full min-w-0",
+        isMobile && "pt-14 sm:pt-16"
       )}>
         <div className="h-full w-full overflow-auto">
-          {children}
+          <div className="max-w-full px-4 sm:px-6 lg:px-8">
+            {children}
+          </div>
         </div>
       </main>
     </div>

@@ -87,47 +87,72 @@ export default function ClientProfile() {
 
   return (
     <Layout>
-      <div className="container mx-auto max-w-6xl py-8">
+      <div className="max-w-6xl mx-auto py-4 sm:py-6 lg:py-8">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="mb-6 space-y-4">
+          <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">{client.fullName}</h1>
-              <p className="text-muted-foreground">{client.companyName}</p>
-            </div>
-            <Badge variant="secondary" className={statusColors[client.status]}>
-              {client.status}
-            </Badge>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(true)}
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              Editar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(true)}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Remover
-            </Button>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground break-words">
+                  {client.fullName}
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground break-words">
+                  {client.companyName}
+                </p>
+              </div>
+              <Badge variant="secondary" className={statusColors[client.status]}>
+                {client.status}
+              </Badge>
+            </div>
+            
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditDialogOpen(true)}
+                className="flex-1 sm:flex-none"
+              >
+                <Edit className="mr-1 sm:mr-2 h-4 w-4" />
+                <span className="text-xs sm:text-sm">Editar</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="text-destructive hover:text-destructive flex-1 sm:flex-none"
+              >
+                <Trash2 className="mr-1 sm:mr-2 h-4 w-4" />
+                <span className="text-xs sm:text-sm">Remover</span>
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="personal" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="personal">Dados Pessoais</TabsTrigger>
-            <TabsTrigger value="company">Dados da Empresa</TabsTrigger>
-            <TabsTrigger value="subscriptions">Mensalidades</TabsTrigger>
-            <TabsTrigger value="credentials">Credenciais da Infra</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+            <TabsTrigger value="personal" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              <span className="hidden sm:inline">Dados Pessoais</span>
+              <span className="sm:hidden">Pessoais</span>
+            </TabsTrigger>
+            <TabsTrigger value="company" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              <span className="hidden sm:inline">Dados da Empresa</span>
+              <span className="sm:hidden">Empresa</span>
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              <span className="hidden sm:inline">Mensalidades</span>
+              <span className="sm:hidden">Mensalidades</span>
+            </TabsTrigger>
+            <TabsTrigger value="credentials" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              <span className="hidden sm:inline">Credenciais da Infra</span>
+              <span className="sm:hidden">Credenciais</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Dados Pessoais */}
