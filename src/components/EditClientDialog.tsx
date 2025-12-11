@@ -56,6 +56,7 @@ interface EditClientDialogProps {
 
 export function EditClientDialog({ open, onOpenChange, client, onSave }: EditClientDialogProps) {
   const [numberCredentials, setNumberCredentials] = useState<NumberCredentials[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const form = useForm<EditClientFormValues>({
     resolver: zodResolver(editClientSchema),
@@ -82,7 +83,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
   });
 
   useEffect(() => {
-    if (client && open) {
+    if (client && open && !isInitialized) {
       const emails = client.emails?.map(email => ({ value: email })) || [];
       const phones = client.phones?.map(phone => ({ value: phone })) || [];
 
@@ -130,8 +131,15 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
         
         setNumberCredentials(migratedCredentials);
       }
+      
+      setIsInitialized(true);
     }
-  }, [client, open, form]);
+    
+    // Reset quando o diálogo fechar
+    if (!open && isInitialized) {
+      setIsInitialized(false);
+    }
+  }, [client, open, isInitialized, form]);
 
   const onSubmit = (values: EditClientFormValues) => {
     if (!client) return;

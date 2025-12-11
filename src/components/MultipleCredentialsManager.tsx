@@ -305,12 +305,22 @@ export function MultipleCredentialsManager({
                       <div className="space-y-2">
                         <Label>Password</Label>
                         {isEditing ? (
-                          <Input
-                            type={showPasswords[`n8n-${index}`] ? "text" : "password"}
-                            value={credential.n8n?.password || ""}
-                            onChange={(e) => updateCredential(index, "n8n.password", e.target.value)}
-                            placeholder="••••••••"
-                          />
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type={showPasswords[`n8n-${index}`] ? "text" : "password"}
+                              value={credential.n8n?.password || ""}
+                              onChange={(e) => updateCredential(index, "n8n.password", e.target.value)}
+                              placeholder="••••••••"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => togglePasswordVisibility(`n8n-${index}`)}
+                            >
+                              {showPasswords[`n8n-${index}`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </div>
                         ) : (
                           <div className="flex items-center gap-2">
                             <Input
