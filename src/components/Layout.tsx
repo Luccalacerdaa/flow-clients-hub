@@ -133,6 +133,7 @@ export function Layout({ children }: LayoutProps) {
                   </nav>
                 </SheetContent>
               </Sheet>
+            </div>
           </div>
         </header>
       )}
