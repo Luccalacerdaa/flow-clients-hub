@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CredentialsSection } from "@/components/CredentialsSection";
+import { MultipleCredentialsManager } from "@/components/MultipleCredentialsManager";
 import { EditClientDialog } from "@/components/EditClientDialog";
 import { DeleteClientDialog } from "@/components/DeleteClientDialog";
 import { SubscriptionsTable } from "@/components/SubscriptionsTable";
@@ -269,11 +270,51 @@ export default function ClientProfile() {
           </TabsContent>
 
           {/* Credenciais */}
-          <TabsContent value="credentials" className="space-y-4">
-            <CredentialsSection
-              credentials={client.infraCredentials}
-              isEditing={false}
-            />
+          <TabsContent value="credentials" className="space-y-6">
+            {/* Credenciais Gerais */}
+            {client.generalCredentials && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Credenciais Gerais</h3>
+                <CredentialsSection 
+                  credentials={client.generalCredentials}
+                  isEditing={false}
+                  onUpdate={() => {}}
+                />
+              </div>
+            )}
+
+            {/* Credenciais por Número */}
+            {client.numberCredentials && client.numberCredentials.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Credenciais por Número</h3>
+                <MultipleCredentialsManager
+                  credentials={client.numberCredentials}
+                  numberOfPhones={client.numberOfPhones || 1}
+                  onUpdate={() => {}}
+                  isEditing={false}
+                />
+              </div>
+            )}
+
+            {/* Credenciais Antigas (Compatibilidade) */}
+            {client.infraCredentials && !client.numberCredentials && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Credenciais da Infraestrutura (Sistema Antigo)</h3>
+                <CredentialsSection 
+                  credentials={client.infraCredentials}
+                  isEditing={false}
+                  onUpdate={() => {}}
+                />
+              </div>
+            )}
+
+            {/* Caso não tenha credenciais */}
+            {!client.generalCredentials && !client.numberCredentials && !client.infraCredentials && (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Nenhuma credencial cadastrada ainda.</p>
+                <p>Edite o cliente para adicionar credenciais.</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 

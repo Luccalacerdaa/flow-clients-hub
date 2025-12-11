@@ -1,6 +1,56 @@
 export type ClientStatus = "Lead" | "Ativo" | "Pausado" | "Encerrado";
 export type CompanySize = "Pequena" | "Média" | "Grande";
 
+// Credenciais para um número específico
+export interface NumberCredentials {
+  id: string;
+  phoneNumber: string; // Número do WhatsApp (ex: +5511999999999)
+  instanceName: string; // Nome da instância (ex: cliente-numero-1)
+  
+  // Credenciais específicas para este número
+  n8n?: {
+    adminUrl: string;
+    email: string;
+    password: string;
+  };
+  cloudfy?: {
+    url: string;
+    email: string;
+    password: string;
+  };
+  evolution?: {
+    managerUrl: string;
+    apiKey: string;
+    instanceName?: string;
+  };
+  supabase?: {
+    projectUrl: string;
+    anonKey: string;
+    serviceRoleKey?: string;
+  };
+  chatgpt?: {
+    apiKey: string;
+    organizationId?: string;
+  };
+  notes?: string;
+}
+
+// Credenciais gerais do cliente (não vinculadas a números específicos)
+export interface GeneralCredentials {
+  // Credenciais compartilhadas
+  supabase?: {
+    projectUrl: string;
+    anonKey: string;
+    serviceRoleKey?: string;
+  };
+  chatgpt?: {
+    apiKey: string;
+    organizationId?: string;
+  };
+  notes?: string;
+}
+
+// Interface para compatibilidade (será removida gradualmente)
 export interface InfraCredentials {
   n8n?: {
     adminUrl: string;
@@ -79,7 +129,16 @@ export interface Client {
   partnershipStartDate?: string;
   monthlyContractValue?: number;
   
-  // Credenciais da infraestrutura
+  // Quantidade de números solicitados
+  numberOfPhones?: number;
+  
+  // Credenciais por número (novo sistema)
+  numberCredentials?: NumberCredentials[];
+  
+  // Credenciais gerais (compartilhadas)
+  generalCredentials?: GeneralCredentials;
+  
+  // Credenciais da infraestrutura (compatibilidade - será removido)
   infraCredentials?: InfraCredentials;
   
   createdAt: string;

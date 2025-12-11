@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Client, ClientStatus } from "@/types/client";
+import { Client, ClientStatus, NumberCredentials } from "@/types/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
+import { MultipleCredentialsManager } from "./MultipleCredentialsManager";
 
 const editClientSchema = z.object({
   fullName: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -41,16 +42,7 @@ const editClientSchema = z.object({
   status: z.enum(["Lead", "Ativo", "Pausado", "Encerrado"]),
   emails: z.array(z.object({ value: z.string().email("Email inválido") })).optional(),
   phones: z.array(z.object({ value: z.string().min(10, "Telefone inválido") })).optional(),
-  // Credenciais
-  n8nUrl: z.string().optional(),
-  n8nEmail: z.string().optional(),
-  n8nPassword: z.string().optional(),
-  cloudfyUrl: z.string().optional(),
-  cloudfyEmail: z.string().optional(),
-  cloudfyPassword: z.string().optional(),
-  evolutionUrl: z.string().optional(),
-  evolutionApiKey: z.string().optional(),
-  evolutionInstance: z.string().optional(),
+  numberOfPhones: z.number().min(1, "Deve ter pelo menos 1 número").max(10, "Máximo 10 números"),
   supabaseUrl: z.string().optional(),
   supabaseAnonKey: z.string().optional(),
   supabaseServiceKey: z.string().optional(),
@@ -64,10 +56,12 @@ interface EditClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   client: Client | null;
-  onSave: (id: string, clientData: Partial<Client>) => void;
+  onSave: (client: Client) => void;
 }
 
 export function EditClientDialog({ open, onOpenChange, client, onSave }: EditClientDialogProps) {
+  const [numberCredentials, setNumberCredentials] = useState<NumberCredentials[]>([]);
+  
   const form = useForm<EditClientFormValues>({
     resolver: zodResolver(editClientSchema),
     defaultValues: {
@@ -78,15 +72,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
       status: "Lead",
       emails: [],
       phones: [],
-      n8nUrl: "",
-      n8nEmail: "",
-      n8nPassword: "",
-      cloudfyUrl: "",
-      cloudfyEmail: "",
-      cloudfyPassword: "",
-      evolutionUrl: "",
-      evolutionApiKey: "",
-      evolutionInstance: "",
+      numberOfPhones: 1,
       supabaseUrl: "",
       supabaseAnonKey: "",
       supabaseServiceKey: "",
@@ -107,65 +93,69 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
 
   useEffect(() => {
     if (client && open) {
+      const emails = client.emails?.map(email => ({ value: email })) || [];
+      const phones = client.phones?.map(phone => ({ value: phone })) || [];
+
       form.reset({
-        fullName: client.fullName || "",
-        companyName: client.companyName || "",
-        email: client.email || "",
-        phone: client.phone || "",
-        status: client.status || "Lead",
-        emails: client.emails?.map(e => ({ value: e })) || [],
-        phones: client.phones?.map(p => ({ value: p })) || [],
-        n8nUrl: client.infraCredentials?.n8n?.adminUrl || "",
-        n8nEmail: client.infraCredentials?.n8n?.email || "",
-        n8nPassword: client.infraCredentials?.n8n?.password || "",
-        cloudfyUrl: client.infraCredentials?.cloudfy?.url || "",
-        cloudfyEmail: client.infraCredentials?.cloudfy?.email || "",
-        cloudfyPassword: client.infraCredentials?.cloudfy?.password || "",
-        evolutionUrl: client.infraCredentials?.evolution?.managerUrl || "",
-        evolutionApiKey: client.infraCredentials?.evolution?.apiKey || "",
-        evolutionInstance: client.infraCredentials?.evolution?.instanceName || "",
-        supabaseUrl: client.infraCredentials?.supabase?.projectUrl || "",
-        supabaseAnonKey: client.infraCredentials?.supabase?.anonKey || "",
-        supabaseServiceKey: client.infraCredentials?.supabase?.serviceRoleKey || "",
-        chatgptApiKey: client.infraCredentials?.chatgpt?.apiKey || "",
-        chatgptOrgId: client.infraCredentials?.chatgpt?.organizationId || "",
+        fullName: client.fullName,
+        companyName: client.companyName,
+        email: client.email,
+        phone: client.phone,
+        status: client.status,
+        emails,
+        phones,
+        numberOfPhones: client.numberOfPhones || 1,
+        supabaseUrl: client.generalCredentials?.supabase?.projectUrl || client.infraCredentials?.supabase?.projectUrl || "",
+        supabaseAnonKey: client.generalCredentials?.supabase?.anonKey || client.infraCredentials?.supabase?.anonKey || "",
+        supabaseServiceKey: client.generalCredentials?.supabase?.serviceRoleKey || client.infraCredentials?.supabase?.serviceRoleKey || "",
+        chatgptApiKey: client.generalCredentials?.chatgpt?.apiKey || client.infraCredentials?.chatgpt?.apiKey || "",
+        chatgptOrgId: client.generalCredentials?.chatgpt?.organizationId || client.infraCredentials?.chatgpt?.organizationId || "",
       });
+
+      // Inicializar credenciais por número
+      if (client.numberCredentials) {
+        setNumberCredentials(client.numberCredentials);
+      } else {
+        // Migrar credenciais antigas se existirem
+        const migratedCredentials: NumberCredentials[] = [];
+        const numberOfPhones = client.numberOfPhones || 1;
+        
+        for (let i = 0; i < numberOfPhones; i++) {
+          const credential: NumberCredentials = {
+            id: `number-${i + 1}`,
+            phoneNumber: "",
+            instanceName: `instancia-${i + 1}`,
+          };
+
+          // Se é o primeiro número e temos credenciais antigas, migrar
+          if (i === 0 && client.infraCredentials) {
+            if (client.infraCredentials.n8n) {
+              credential.n8n = client.infraCredentials.n8n;
+            }
+            if (client.infraCredentials.evolution) {
+              credential.evolution = client.infraCredentials.evolution;
+            }
+          }
+
+          migratedCredentials.push(credential);
+        }
+        
+        setNumberCredentials(migratedCredentials);
+      }
     }
   }, [client, open, form]);
 
   const onSubmit = (values: EditClientFormValues) => {
     if (!client) return;
+
     const emails = values.emails?.map(e => e.value).filter(Boolean) || [];
     const phones = values.phones?.map(p => p.value).filter(Boolean) || [];
 
-    const infraCredentials: Client["infraCredentials"] = {};
+    // Credenciais gerais (compartilhadas)
+    const generalCredentials: Client["generalCredentials"] = {};
     
-    if (values.n8nUrl || values.n8nEmail || values.n8nPassword) {
-      infraCredentials.n8n = {
-        adminUrl: values.n8nUrl || "",
-        email: values.n8nEmail || "",
-        password: values.n8nPassword || "",
-      };
-    }
-
-    if (values.cloudfyUrl || values.cloudfyEmail || values.cloudfyPassword) {
-      infraCredentials.cloudfy = {
-        url: values.cloudfyUrl || "",
-        email: values.cloudfyEmail || "",
-        password: values.cloudfyPassword || "",
-      };
-    }
-
-    if (values.evolutionUrl || values.evolutionApiKey) {
-      infraCredentials.evolution = {
-        managerUrl: values.evolutionUrl || "",
-        apiKey: values.evolutionApiKey || "",
-        instanceName: values.evolutionInstance,
-      };
-    }
-
     if (values.supabaseUrl || values.supabaseAnonKey) {
-      infraCredentials.supabase = {
+      generalCredentials.supabase = {
         projectUrl: values.supabaseUrl || "",
         anonKey: values.supabaseAnonKey || "",
         serviceRoleKey: values.supabaseServiceKey,
@@ -173,13 +163,14 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
     }
 
     if (values.chatgptApiKey) {
-      infraCredentials.chatgpt = {
+      generalCredentials.chatgpt = {
         apiKey: values.chatgptApiKey || "",
         organizationId: values.chatgptOrgId,
       };
     }
 
-    const updatedData: Partial<Client> = {
+    const updatedClient: Client = {
+      ...client,
       fullName: values.fullName,
       email: values.email || "",
       emails: emails.length > 0 ? emails : undefined,
@@ -187,11 +178,13 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
       phones: phones.length > 0 ? phones : undefined,
       companyName: values.companyName,
       status: values.status as ClientStatus,
-      infraCredentials: Object.keys(infraCredentials).length > 0 ? infraCredentials : undefined,
+      numberOfPhones: values.numberOfPhones,
+      numberCredentials,
+      generalCredentials: Object.keys(generalCredentials).length > 0 ? generalCredentials : undefined,
       updatedAt: new Date().toISOString(),
     };
 
-    onSave(client.id, updatedData);
+    onSave(updatedClient);
     onOpenChange(false);
   };
 
@@ -199,113 +192,172 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Cliente</DialogTitle>
           <DialogDescription>
-            Atualize as informações do cliente abaixo.
+            Atualize as informações do cliente e suas credenciais.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="basic">Dados Básicos</TabsTrigger>
                 <TabsTrigger value="contacts">Contatos</TabsTrigger>
-                <TabsTrigger value="credentials">Credenciais</TabsTrigger>
+                <TabsTrigger value="general-credentials">Credenciais Gerais</TabsTrigger>
+                <TabsTrigger value="number-credentials">Credenciais por Número</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="basic" className="space-y-4 mt-4">
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome Completo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Digite o nome completo" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="companyName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Empresa</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Digite o nome da empresa" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Principal</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="email@exemplo.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telefone Principal</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: +55 11 98765-4321" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <TabsContent value="basic" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome Completo</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o status" />
-                          </SelectTrigger>
+                          <Input placeholder="João Silva" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Lead">Lead</SelectItem>
-                          <SelectItem value="Ativo">Ativo</SelectItem>
-                          <SelectItem value="Pausado">Pausado</SelectItem>
-                          <SelectItem value="Encerrado">Encerrado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="companyName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome da Empresa</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Empresa LTDA" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Principal</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="joao@empresa.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone Principal</FormLabel>
+                        <FormControl>
+                          <Input placeholder="(11) 99999-9999" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="numberOfPhones"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantidade de Números</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="10"
+                            placeholder="1"
+                            value={field.value}
+                            onChange={(e) => {
+                              const newCount = parseInt(e.target.value) || 1;
+                              field.onChange(newCount);
+                              
+                              // Ajustar credenciais por número
+                              const updatedCredentials = [...numberCredentials];
+                              
+                              // Adicionar credenciais se aumentou
+                              while (updatedCredentials.length < newCount) {
+                                updatedCredentials.push({
+                                  id: `number-${updatedCredentials.length + 1}`,
+                                  phoneNumber: "",
+                                  instanceName: `instancia-${updatedCredentials.length + 1}`,
+                                });
+                              }
+                              
+                              // Remover credenciais se diminuiu
+                              if (updatedCredentials.length > newCount) {
+                                updatedCredentials.splice(newCount);
+                              }
+                              
+                              setNumberCredentials(updatedCredentials);
+                            }}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Quantos números de WhatsApp este cliente vai usar? (1-10)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Lead">Lead</SelectItem>
+                            <SelectItem value="Ativo">Ativo</SelectItem>
+                            <SelectItem value="Pausado">Pausado</SelectItem>
+                            <SelectItem value="Encerrado">Encerrado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </TabsContent>
 
-              <TabsContent value="contacts" className="space-y-4 mt-4">
-                <div>
-                  <FormLabel>Emails Adicionais (para automações)</FormLabel>
-                  <FormDescription className="mb-2">
-                    Adicione emails adicionais que serão usados nas automações
-                  </FormDescription>
+              <TabsContent value="contacts" className="space-y-4">
+                {/* Emails */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">Emails Adicionais</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => appendEmail({ value: "" })}
+                      className="gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Adicionar Email
+                    </Button>
+                  </div>
                   {emailFields.map((field, index) => (
-                    <div key={field.id} className="flex gap-2 mb-2">
+                    <div key={field.id} className="flex items-center gap-2">
                       <FormField
                         control={form.control}
                         name={`emails.${index}.value`}
@@ -328,32 +380,32 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
                       </Button>
                     </div>
                   ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => appendEmail({ value: "" })}
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Email
-                  </Button>
                 </div>
 
-                <div>
-                  <FormLabel>Telefones Adicionais (para automações)</FormLabel>
-                  <FormDescription className="mb-2">
-                    Adicione telefones adicionais que serão usados nas automações
-                  </FormDescription>
+                {/* Telefones */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">Telefones Adicionais</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => appendPhone({ value: "" })}
+                      className="gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Adicionar Telefone
+                    </Button>
+                  </div>
                   {phoneFields.map((field, index) => (
-                    <div key={field.id} className="flex gap-2 mb-2">
+                    <div key={field.id} className="flex items-center gap-2">
                       <FormField
                         control={form.control}
                         name={`phones.${index}.value`}
                         render={({ field }) => (
                           <FormItem className="flex-1">
                             <FormControl>
-                              <Input placeholder="+55 11 98765-4321" {...field} />
+                              <Input placeholder="(11) 99999-9999" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -369,241 +421,105 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
                       </Button>
                     </div>
                   ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => appendPhone({ value: "" })}
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Telefone
-                  </Button>
                 </div>
               </TabsContent>
 
-              <TabsContent value="credentials" className="space-y-4 mt-4">
+              <TabsContent value="general-credentials" className="space-y-4">
                 <div className="space-y-4">
-                  <div className="border-b pb-2">
-                    <h4 className="font-semibold">n8n</h4>
+                  <div className="text-sm text-muted-foreground">
+                    <p>Estas credenciais serão compartilhadas entre todos os números do cliente.</p>
                   </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="n8nUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>URL Admin</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://n8n.exemplo.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="n8nEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="admin@exemplo.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="n8nPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Senha</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  
+                  <div className="space-y-4">
+                    <div className="border-b pb-2">
+                      <h4 className="font-semibold">Supabase</h4>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="supabaseUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Project URL</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://xxx.supabase.co" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="supabaseAnonKey"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Anon Key</FormLabel>
+                            <FormControl>
+                              <Input placeholder="eyJhbGci..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="supabaseServiceKey"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Service Role Key (opcional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="eyJhbGci..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-4">
-                  <div className="border-b pb-2">
-                    <h4 className="font-semibold">Cloudfy</h4>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="cloudfyUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>URL</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://cloudfy.exemplo.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="cloudfyEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="admin@exemplo.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="cloudfyPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Senha</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <div className="space-y-4">
+                    <div className="border-b pb-2">
+                      <h4 className="font-semibold">ChatGPT</h4>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="chatgptApiKey"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>API Key</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="sk-..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="chatgptOrgId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Organization ID (opcional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="org-xxx" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
                 </div>
+              </TabsContent>
 
-                <div className="space-y-4">
-                  <div className="border-b pb-2">
-                    <h4 className="font-semibold">Evolution API</h4>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="evolutionUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Manager URL</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://evolution.exemplo.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="evolutionApiKey"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>API Key</FormLabel>
-                          <FormControl>
-                            <Input placeholder="sua-api-key" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="evolutionInstance"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome da Instância (opcional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="instancia-01" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="border-b pb-2">
-                    <h4 className="font-semibold">Supabase</h4>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="supabaseUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Project URL</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://xxx.supabase.co" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="supabaseAnonKey"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Anon Key</FormLabel>
-                          <FormControl>
-                            <Input placeholder="eyJhbGci..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="supabaseServiceKey"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Service Role Key (opcional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="eyJhbGci..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="border-b pb-2">
-                    <h4 className="font-semibold">ChatGPT</h4>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="chatgptApiKey"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>API Key</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="sk-..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="chatgptOrgId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Organization ID (opcional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="org-xxx" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
+              <TabsContent value="number-credentials" className="space-y-4">
+                <MultipleCredentialsManager
+                  credentials={numberCredentials}
+                  numberOfPhones={form.watch("numberOfPhones")}
+                  onUpdate={setNumberCredentials}
+                  isEditing={true}
+                />
               </TabsContent>
             </Tabs>
 
@@ -618,7 +534,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
               >
                 Cancelar
               </Button>
-              <Button type="submit">Salvar</Button>
+              <Button type="submit">Salvar Alterações</Button>
             </DialogFooter>
           </form>
         </Form>
