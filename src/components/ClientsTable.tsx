@@ -256,7 +256,7 @@ export function ClientsTable({ clients, onAddClient, onEditClient, onDeleteClien
         open={isEditClientDialogOpen}
         onOpenChange={setIsEditClientDialogOpen}
         client={selectedClient}
-        onSave={onEditClient}
+        onSave={(updatedClient) => onEditClient(updatedClient.id, updatedClient)}
       />
 
       <DeleteClientDialog

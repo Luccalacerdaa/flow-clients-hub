@@ -6,7 +6,9 @@ interface ClientRow {
   id: string;
   full_name: string;
   email: string;
+  emails?: string[] | null;
   phone: string;
+  phones?: string[] | null;
   position: string | null;
   personal_notes: string | null;
   company_name: string;
@@ -18,6 +20,9 @@ interface ClientRow {
   status: ClientStatus;
   partnership_start_date: string | null;
   monthly_contract_value: number | null;
+  number_of_phones?: number | null;
+  number_credentials: any;
+  general_credentials: any;
   infra_credentials: any;
   created_at: string;
   updated_at: string;
@@ -29,7 +34,9 @@ function dbToClient(row: ClientRow): Client {
     id: row.id,
     fullName: row.full_name,
     email: row.email,
+    emails: row.emails || undefined,
     phone: row.phone,
+    phones: row.phones || undefined,
     position: row.position || '',
     personalNotes: row.personal_notes || undefined,
     companyName: row.company_name,
@@ -41,6 +48,9 @@ function dbToClient(row: ClientRow): Client {
     status: row.status,
     partnershipStartDate: row.partnership_start_date || undefined,
     monthlyContractValue: row.monthly_contract_value ? Number(row.monthly_contract_value) : undefined,
+    numberOfPhones: row.number_of_phones || undefined,
+    numberCredentials: row.number_credentials || undefined,
+    generalCredentials: row.general_credentials || undefined,
     infraCredentials: row.infra_credentials || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -53,7 +63,9 @@ function clientToDb(client: Partial<Client>): Partial<ClientRow> {
   
   if (client.fullName !== undefined) dbClient.full_name = client.fullName;
   if (client.email !== undefined) dbClient.email = client.email;
+  if (client.emails !== undefined) dbClient.emails = client.emails || null;
   if (client.phone !== undefined) dbClient.phone = client.phone;
+  if (client.phones !== undefined) dbClient.phones = client.phones || null;
   if (client.position !== undefined) dbClient.position = client.position || null;
   if (client.personalNotes !== undefined) dbClient.personal_notes = client.personalNotes || null;
   if (client.companyName !== undefined) dbClient.company_name = client.companyName;
@@ -65,6 +77,9 @@ function clientToDb(client: Partial<Client>): Partial<ClientRow> {
   if (client.status !== undefined) dbClient.status = client.status;
   if (client.partnershipStartDate !== undefined) dbClient.partnership_start_date = client.partnershipStartDate || null;
   if (client.monthlyContractValue !== undefined) dbClient.monthly_contract_value = client.monthlyContractValue || null;
+  if (client.numberOfPhones !== undefined) dbClient.number_of_phones = client.numberOfPhones || null;
+  if (client.numberCredentials !== undefined) dbClient.number_credentials = client.numberCredentials || null;
+  if (client.generalCredentials !== undefined) dbClient.general_credentials = client.generalCredentials || null;
   if (client.infraCredentials !== undefined) dbClient.infra_credentials = client.infraCredentials || null;
   
   return dbClient;

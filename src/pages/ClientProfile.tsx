@@ -322,8 +322,8 @@ export default function ClientProfile() {
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
           client={client || null}
-          onSave={(id, data) => {
-            editClient(id, data);
+          onSave={(updatedClient) => {
+            editClient(updatedClient.id, updatedClient);
             setIsEditDialogOpen(false);
           }}
         />
