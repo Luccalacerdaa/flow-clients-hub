@@ -136,6 +136,9 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
   const onSubmit = (values: EditClientFormValues) => {
     if (!client) return;
 
+    console.log('EditClientDialog onSubmit called with values:', values);
+    console.log('Current numberCredentials:', numberCredentials);
+
     const emails = values.emails?.map(e => e.value).filter(Boolean) || [];
     const phones = values.phones?.map(p => p.value).filter(Boolean) || [];
 
@@ -153,6 +156,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
       updatedAt: new Date().toISOString(),
     };
 
+    console.log('Calling onSave with updatedClient:', updatedClient);
     onSave(updatedClient);
     onOpenChange(false);
   };

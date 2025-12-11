@@ -64,6 +64,8 @@ export function AgentsManager({
       return;
     }
 
+    console.log('AgentsManager addAgent called');
+
     const agent: Agent = {
       id: `agent-${Date.now()}`,
       name: newAgent.name.trim(),
@@ -75,6 +77,7 @@ export function AgentsManager({
       updatedAt: new Date().toISOString(),
     };
 
+    console.log('Calling onUpdate with new agents:', [...agents, agent]);
     onUpdate([...agents, agent]);
     setNewAgent({ name: "", description: "", prompt: "", isActive: true, priority: 1 });
     setIsAddDialogOpen(false);
