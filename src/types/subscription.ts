@@ -15,9 +15,31 @@ export interface PaymentHistory {
 export interface Subscription {
   id: string;
   clientId: string;
-  amount: number;
-  dueDate: string; // ISO date string
-  paymentDate?: string; // ISO date string
+  
+  // Valores base
+  implementationValue: number; // Valor total da implementação
+  maintenanceValuePerNumber: number; // Valor de manutenção por número
+  numberOfNumbers: number; // Quantidade de números contratados
+  
+  // Configurações de pagamento
+  implementationPaymentType: "vista" | "parcelado"; // À vista ou parcelado
+  implementationInstallments?: number; // Quantas parcelas (se parcelado)
+  contractDuration: number; // Duração do contrato em meses (padrão 12)
+  paymentDay: number; // Dia do pagamento (1-31)
+  
+  // Valores calculados
+  monthlyImplementationAmount: number; // Valor mensal da implementação (se parcelado)
+  monthlyMaintenanceAmount: number; // Valor mensal de manutenção total
+  totalMonthlyAmount: number; // Valor total mensal
+  
+  // Controle de parcelas
+  currentInstallment: number; // Parcela atual
+  totalInstallments: number; // Total de parcelas do contrato
+  
+  // Campos existentes (compatibilidade)
+  amount: number; // Valor da parcela atual
+  dueDate: string; // Data de vencimento da parcela atual
+  paymentDate?: string; // Data de pagamento
   status: PaymentStatus;
   isRecurring: boolean;
   recurrenceMonth?: number; // 1-12
@@ -25,8 +47,6 @@ export interface Subscription {
   category?: SubscriptionCategory;
   description?: string;
   startDate?: string;
-  totalInstallments?: number; // null = infinito
-  currentInstallment?: number;
   isPaused?: boolean;
   initialPaymentAmount?: number;
   initialPaymentPaid?: boolean;

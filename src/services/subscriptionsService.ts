@@ -21,6 +21,19 @@ interface SubscriptionRow {
   initial_payment_amount: number | null;
   initial_payment_paid: boolean | null;
   notes: string | null;
+  
+  // Novos campos para o sistema avançado
+  implementation_value: number | null;
+  maintenance_value_per_number: number | null;
+  number_of_numbers: number | null;
+  implementation_payment_type: string | null;
+  implementation_installments: number | null;
+  contract_duration: number | null;
+  payment_day: number | null;
+  monthly_implementation_amount: number | null;
+  monthly_maintenance_amount: number | null;
+  total_monthly_amount: number | null;
+  
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +59,19 @@ function dbToSubscription(row: SubscriptionRow): Subscription {
     initialPaymentAmount: row.initial_payment_amount ? Number(row.initial_payment_amount) : undefined,
     initialPaymentPaid: row.initial_payment_paid || false,
     notes: row.notes || undefined,
+    
+    // Novos campos
+    implementationValue: row.implementation_value ? Number(row.implementation_value) : 0,
+    maintenanceValuePerNumber: row.maintenance_value_per_number ? Number(row.maintenance_value_per_number) : 0,
+    numberOfNumbers: row.number_of_numbers || 1,
+    implementationPaymentType: (row.implementation_payment_type as "vista" | "parcelado") || "parcelado",
+    implementationInstallments: row.implementation_installments || undefined,
+    contractDuration: row.contract_duration || 12,
+    paymentDay: row.payment_day || 10,
+    monthlyImplementationAmount: row.monthly_implementation_amount ? Number(row.monthly_implementation_amount) : 0,
+    monthlyMaintenanceAmount: row.monthly_maintenance_amount ? Number(row.monthly_maintenance_amount) : 0,
+    totalMonthlyAmount: row.total_monthly_amount ? Number(row.total_monthly_amount) : 0,
+    
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -72,6 +98,18 @@ function subscriptionToDb(subscription: Partial<Subscription>): Partial<Subscrip
   if (subscription.initialPaymentAmount !== undefined) dbSubscription.initial_payment_amount = subscription.initialPaymentAmount || null;
   if (subscription.initialPaymentPaid !== undefined) dbSubscription.initial_payment_paid = subscription.initialPaymentPaid || null;
   if (subscription.notes !== undefined) dbSubscription.notes = subscription.notes || null;
+  
+  // Novos campos
+  if (subscription.implementationValue !== undefined) dbSubscription.implementation_value = subscription.implementationValue || null;
+  if (subscription.maintenanceValuePerNumber !== undefined) dbSubscription.maintenance_value_per_number = subscription.maintenanceValuePerNumber || null;
+  if (subscription.numberOfNumbers !== undefined) dbSubscription.number_of_numbers = subscription.numberOfNumbers || null;
+  if (subscription.implementationPaymentType !== undefined) dbSubscription.implementation_payment_type = subscription.implementationPaymentType || null;
+  if (subscription.implementationInstallments !== undefined) dbSubscription.implementation_installments = subscription.implementationInstallments || null;
+  if (subscription.contractDuration !== undefined) dbSubscription.contract_duration = subscription.contractDuration || null;
+  if (subscription.paymentDay !== undefined) dbSubscription.payment_day = subscription.paymentDay || null;
+  if (subscription.monthlyImplementationAmount !== undefined) dbSubscription.monthly_implementation_amount = subscription.monthlyImplementationAmount || null;
+  if (subscription.monthlyMaintenanceAmount !== undefined) dbSubscription.monthly_maintenance_amount = subscription.monthlyMaintenanceAmount || null;
+  if (subscription.totalMonthlyAmount !== undefined) dbSubscription.total_monthly_amount = subscription.totalMonthlyAmount || null;
   
   return dbSubscription;
 }
@@ -173,26 +211,36 @@ export const subscriptionsService = {
 
   // Criar próxima mensalidade recorrente
   async createNextRecurring(subscription: Subscription): Promise<Subscription | null> {
-    if (!subscription.isRecurring || !subscription.recurrenceDay) {
+    if (!subscription.isRecurring || !subscription.paymentDay) {
       return null;
     }
 
-    // Verificar se já atingiu o limite de parcelas
+    // Verificar se já atingiu o limite de parcelas do contrato
     if (subscription.totalInstallments && subscription.currentInstallment && 
         subscription.currentInstallment >= subscription.totalInstallments) {
       return null;
     }
 
-    const nextDueDate = calculateNextDueDate(subscription.recurrenceDay, subscription.dueDate);
+    const nextDueDate = calculateNextDueDate(subscription.paymentDay, subscription.dueDate);
     const nextInstallment = (subscription.currentInstallment || 1) + 1;
+
+    // Calcular valor da próxima parcela
+    let nextAmount = subscription.monthlyMaintenanceAmount || 0;
+    
+    // Se ainda está no período de implementação, adicionar valor da implementação
+    if (subscription.implementationPaymentType === "parcelado" && 
+        subscription.implementationInstallments && 
+        nextInstallment <= subscription.implementationInstallments) {
+      nextAmount += subscription.monthlyImplementationAmount || 0;
+    }
 
     const nextSubscription: Omit<Subscription, 'id' | 'createdAt' | 'updatedAt'> = {
       clientId: subscription.clientId,
-      amount: subscription.amount,
+      amount: nextAmount,
       dueDate: nextDueDate,
       status: 'Pendente',
       isRecurring: subscription.isRecurring,
-      recurrenceDay: subscription.recurrenceDay,
+      recurrenceDay: subscription.paymentDay,
       category: subscription.category,
       description: subscription.description,
       startDate: subscription.startDate,
@@ -201,6 +249,18 @@ export const subscriptionsService = {
       isPaused: false,
       initialPaymentAmount: subscription.initialPaymentAmount,
       initialPaymentPaid: subscription.initialPaymentPaid,
+      
+      // Manter dados do contrato
+      implementationValue: subscription.implementationValue,
+      maintenanceValuePerNumber: subscription.maintenanceValuePerNumber,
+      numberOfNumbers: subscription.numberOfNumbers,
+      implementationPaymentType: subscription.implementationPaymentType,
+      implementationInstallments: subscription.implementationInstallments,
+      contractDuration: subscription.contractDuration,
+      paymentDay: subscription.paymentDay,
+      monthlyImplementationAmount: subscription.monthlyImplementationAmount,
+      monthlyMaintenanceAmount: subscription.monthlyMaintenanceAmount,
+      totalMonthlyAmount: nextAmount,
     };
 
     return this.create(nextSubscription);

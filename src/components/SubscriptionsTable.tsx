@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Edit, Trash2, CheckCircle2, Plus, Eye, Search } from "lucide-react";
+import { Edit, Trash2, CheckCircle2, Plus, Eye, Search, Phone, Calculator, Calendar } from "lucide-react";
 import { EditSubscriptionDialog } from "@/components/EditSubscriptionDialog";
 import { DeleteSubscriptionDialog } from "@/components/DeleteSubscriptionDialog";
 import { NewSubscriptionDialog } from "@/components/NewSubscriptionDialog";
@@ -150,12 +150,12 @@ export function SubscriptionsTable({
           <TableHeader>
             <TableRow>
               {showClientName && <TableHead>Cliente</TableHead>}
-              <TableHead>Valor</TableHead>
+              <TableHead>Detalhes do Contrato</TableHead>
+              <TableHead>Valor Mensal</TableHead>
               <TableHead>Vencimento</TableHead>
               <TableHead>Pagamento</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Recorrente</TableHead>
-              <TableHead>Categoria</TableHead>
+              <TableHead>Progresso</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -191,10 +191,47 @@ export function SubscriptionsTable({
                         </div>
                       </TableCell>
                     )}
-                    <TableCell className="font-semibold">
-                      {formatCurrency(subscription.amount)}
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-sm">
+                          <Phone className="h-3 w-3" />
+                          <span>{subscription.numberOfNumbers || 1} números</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Calculator className="h-3 w-3" />
+                          <span>Manutenção: {formatCurrency(subscription.maintenanceValuePerNumber || 0)}/nº</span>
+                        </div>
+                        {subscription.implementationValue && subscription.implementationValue > 0 && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <span>Implementação: {formatCurrency(subscription.implementationValue)}</span>
+                            {subscription.implementationPaymentType === "parcelado" && (
+                              <span>({subscription.implementationInstallments}x)</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell>{formatDate(subscription.dueDate)}</TableCell>
+                    <TableCell className="font-semibold">
+                      <div className="space-y-1">
+                        <div>{formatCurrency(subscription.amount)}</div>
+                        {subscription.monthlyImplementationAmount && subscription.monthlyImplementationAmount > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            Manutenção: {formatCurrency(subscription.monthlyMaintenanceAmount || 0)}
+                            <br />
+                            Implementação: {formatCurrency(subscription.monthlyImplementationAmount)}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div>{formatDate(subscription.dueDate)}</div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          <span>Todo dia {subscription.paymentDay || subscription.recurrenceDay}</span>
+                        </div>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {subscription.paymentDate
                         ? formatDate(subscription.paymentDate)
@@ -210,16 +247,19 @@ export function SubscriptionsTable({
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {subscription.isRecurring ? (
-                        <Badge variant="outline">Sim</Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-gray-100">
-                          Não
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {subscription.category || "-"}
+                      <div className="space-y-1">
+                        <div className="text-sm">
+                          {subscription.currentInstallment || 1}/{subscription.totalInstallments || subscription.contractDuration || 12}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {subscription.contractDuration || 12} meses
+                        </div>
+                        {subscription.implementationInstallments && subscription.implementationPaymentType === "parcelado" && (
+                          <div className="text-xs text-orange-600">
+                            Impl: {Math.min(subscription.currentInstallment || 1, subscription.implementationInstallments)}/{subscription.implementationInstallments}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
