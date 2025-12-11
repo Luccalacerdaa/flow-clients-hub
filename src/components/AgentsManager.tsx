@@ -45,6 +45,7 @@ export function AgentsManager({
 }: AgentsManagerProps) {
   const [editingAgent, setEditingAgent] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [expandedPrompts, setExpandedPrompts] = useState<Record<string, boolean>>({});
   const [newAgent, setNewAgent] = useState({
     name: "",
     description: "",
@@ -56,6 +57,19 @@ export function AgentsManager({
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${label} copiado!`);
+  };
+
+  const togglePromptExpansion = (agentId: string) => {
+    setExpandedPrompts((prev) => ({ ...prev, [agentId]: !prev[agentId] }));
+  };
+
+  const isPromptExpanded = (agentId: string) => {
+    return expandedPrompts[agentId] || false;
+  };
+
+  const getPromptPreview = (prompt: string, maxLength: number = 150) => {
+    if (prompt.length <= maxLength) return prompt;
+    return prompt.substring(0, maxLength) + "...";
   };
 
   const addAgent = () => {
@@ -326,19 +340,32 @@ export function AgentsManager({
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Prompt do Agente</Label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyToClipboard(agent.prompt, "Prompt")}
-                          className="gap-2"
-                        >
-                          <Copy className="h-4 w-4" />
-                          Copiar
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => togglePromptExpansion(agent.id)}
+                            className="gap-2"
+                          >
+                            {isPromptExpanded(agent.id) ? "Ver menos" : "Ver mais"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyToClipboard(agent.prompt, "Prompt")}
+                            className="gap-2"
+                          >
+                            <Copy className="h-4 w-4" />
+                            Copiar
+                          </Button>
+                        </div>
                       </div>
                       <div className="bg-muted p-4 rounded-md">
                         <pre className="text-sm whitespace-pre-wrap font-mono">
-                          {agent.prompt}
+                          {isPromptExpanded(agent.id) 
+                            ? agent.prompt 
+                            : getPromptPreview(agent.prompt)
+                          }
                         </pre>
                       </div>
                     </div>
