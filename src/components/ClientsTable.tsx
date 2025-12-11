@@ -256,7 +256,11 @@ export function ClientsTable({ clients, onAddClient, onEditClient, onDeleteClien
         open={isEditClientDialogOpen}
         onOpenChange={setIsEditClientDialogOpen}
         client={selectedClient}
-        onSave={(updatedClient) => onEditClient(updatedClient.id, updatedClient)}
+        onSave={(updatedClient) => {
+          // Remover campos que não devem ser atualizados
+          const { id, createdAt, updatedAt, ...clientData } = updatedClient;
+          onEditClient(id, clientData);
+        }}
       />
 
       <DeleteClientDialog

@@ -30,6 +30,10 @@ interface ClientRow {
 
 // Converter do formato do banco para o formato da aplicação
 function dbToClient(row: ClientRow): Client {
+  if (!row) {
+    throw new Error('Dados do banco são undefined ou null');
+  }
+  
   return {
     id: row.id,
     fullName: row.full_name,
@@ -59,6 +63,11 @@ function dbToClient(row: ClientRow): Client {
 
 // Converter do formato da aplicação para o formato do banco
 function clientToDb(client: Partial<Client>): Partial<ClientRow> {
+  if (!client) {
+    console.error('Cliente é undefined ou null na função clientToDb');
+    return {};
+  }
+  
   const dbClient: Partial<ClientRow> = {};
   
   if (client.fullName !== undefined) dbClient.full_name = client.fullName;
@@ -140,7 +149,23 @@ export const clientsService = {
 
   // Atualizar cliente
   async update(id: string, updates: Partial<Client>): Promise<Client> {
+    if (!id) {
+      throw new Error('ID do cliente é obrigatório para atualização');
+    }
+    
+    if (!updates || Object.keys(updates).length === 0) {
+      throw new Error('Dados de atualização não fornecidos');
+    }
+    
+    console.log('Atualizando cliente:', { id, updates });
+    
     const dbUpdates = clientToDb(updates);
+    
+    if (Object.keys(dbUpdates).length === 0) {
+      throw new Error('Nenhum campo válido para atualização');
+    }
+    
+    console.log('Dados para o banco:', dbUpdates);
     
     const { data, error } = await supabase
       .from('clients')

@@ -323,7 +323,9 @@ export default function ClientProfile() {
           onOpenChange={setIsEditDialogOpen}
           client={client || null}
           onSave={(updatedClient) => {
-            editClient(updatedClient.id, updatedClient);
+            // Remover campos que não devem ser atualizados
+            const { id, createdAt, updatedAt, ...clientData } = updatedClient;
+            editClient(id, clientData);
             setIsEditDialogOpen(false);
           }}
         />
