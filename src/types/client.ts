@@ -102,8 +102,8 @@ export interface InfraCredentials {
     serviceRoleKey?: string;
   };
   chatgpt?: {
-    apiKey: string;
-    organizationId?: string;
+    chatLink: string; // Atualizado para usar link do chat
+    description?: string;
   };
   evolutionApi?: {
     managerUrl: string;

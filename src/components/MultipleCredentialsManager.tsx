@@ -489,37 +489,32 @@ export function MultipleCredentialsManager({
                       </div>
                       <h4 className="font-semibold">ChatGPT</h4>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
-                        <Label>API Key</Label>
+                        <Label>Link do Chat</Label>
                         {isEditing ? (
                           <Input
-                            type={showPasswords[`chatgpt-${index}`] ? "text" : "password"}
-                            value={credential.chatgpt?.apiKey || ""}
-                            onChange={(e) => updateCredential(index, "chatgpt.apiKey", e.target.value)}
-                            placeholder="sk-..."
+                            value={credential.chatgpt?.chatLink || ""}
+                            onChange={(e) => updateCredential(index, "chatgpt.chatLink", e.target.value)}
+                            placeholder="https://chat.openai.com/share/..."
                           />
                         ) : (
                           <div className="flex items-center gap-2">
-                            <Input
-                              type={showPasswords[`chatgpt-${index}`] ? "text" : "password"}
-                              value={credential.chatgpt?.apiKey || ""}
-                              readOnly
-                              className="font-mono text-sm"
-                            />
-                            {credential.chatgpt?.apiKey && (
+                            <Input value={credential.chatgpt?.chatLink || ""} readOnly />
+                            {credential.chatgpt?.chatLink && (
                               <>
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  onClick={() => togglePasswordVisibility(`chatgpt-${index}`)}
+                                  onClick={() => window.open(credential.chatgpt?.chatLink, '_blank')}
+                                  title="Abrir chat"
                                 >
-                                  {showPasswords[`chatgpt-${index}`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  <Eye className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  onClick={() => copyToClipboard(credential.chatgpt?.apiKey || "", "API Key")}
+                                  onClick={() => copyToClipboard(credential.chatgpt?.chatLink || "", "Link do Chat")}
                                 >
                                   <Copy className="h-4 w-4" />
                                 </Button>
@@ -529,26 +524,15 @@ export function MultipleCredentialsManager({
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label>Organization ID (Opcional)</Label>
+                        <Label>Descrição do Chat (Opcional)</Label>
                         {isEditing ? (
                           <Input
-                            value={credential.chatgpt?.organizationId || ""}
-                            onChange={(e) => updateCredential(index, "chatgpt.organizationId", e.target.value)}
-                            placeholder="org-..."
+                            value={credential.chatgpt?.description || ""}
+                            onChange={(e) => updateCredential(index, "chatgpt.description", e.target.value)}
+                            placeholder="Descreva o prompt/chat usado"
                           />
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <Input value={credential.chatgpt?.organizationId || ""} readOnly />
-                            {credential.chatgpt?.organizationId && (
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => copyToClipboard(credential.chatgpt?.organizationId || "", "Organization ID")}
-                              >
-                                <Copy className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
+                          <Input value={credential.chatgpt?.description || "Não informado"} readOnly />
                         )}
                       </div>
                     </div>

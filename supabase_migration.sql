@@ -48,7 +48,7 @@ COMMENT ON COLUMN clients.number_credentials IS 'Credenciais espec√≠ficas por n√
     "n8n": { "adminUrl": "...", "email": "...", "password": "..." },
     "evolution": { "managerUrl": "...", "apiKey": "..." },
     "supabase": { "projectUrl": "...", "anonKey": "..." },
-    "chatgpt": { "apiKey": "..." }
+    "chatgpt": { "chatLink": "https://chat.openai.com/share/...", "description": "Prompt para vendas" }
   }
 ]
 */

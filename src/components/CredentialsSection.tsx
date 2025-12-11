@@ -43,7 +43,7 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
     } else if (section === "supabase") {
       updated.supabase = { ...(updated.supabase || { projectUrl: "", anonKey: "" }), [field]: value };
     } else if (section === "chatgpt") {
-      updated.chatgpt = { ...(updated.chatgpt || { apiKey: "" }), [field]: value };
+      updated.chatgpt = { ...(updated.chatgpt || { chatLink: "" }), [field]: value };
     }
     
     setLocalCredentials(updated);
@@ -334,43 +334,34 @@ export function CredentialsSection({ credentials, isEditing, onUpdate }: Credent
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>API Key</Label>
+              <Label>Link do Chat</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  type={showPasswords["chatgpt"] ? "text" : "password"}
-                  value={credentials.chatgpt?.apiKey || ""}
+                  value={credentials.chatgpt?.chatLink || ""}
                   readOnly
                   className="font-mono text-sm"
                 />
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => togglePasswordVisibility("chatgpt")}
+                  onClick={() => window.open(credentials.chatgpt?.chatLink, '_blank')}
+                  title="Abrir chat"
                 >
-                  {showPasswords["chatgpt"] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <Eye className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => copyToClipboard(credentials.chatgpt?.apiKey || "", "API Key")}
+                  onClick={() => copyToClipboard(credentials.chatgpt?.chatLink || "", "Link do Chat")}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-            {credentials.chatgpt?.organizationId && (
+            {credentials.chatgpt?.description && (
               <div className="space-y-2">
-                <Label>Organization ID</Label>
-                <div className="flex items-center gap-2">
-                  <Input value={credentials.chatgpt.organizationId} readOnly className="font-mono text-sm" />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => copyToClipboard(credentials.chatgpt?.organizationId || "", "Org ID")}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Label>Descrição</Label>
+                <Input value={credentials.chatgpt.description} readOnly />
               </div>
             )}
           </CardContent>
