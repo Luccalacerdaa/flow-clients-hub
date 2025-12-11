@@ -72,8 +72,6 @@ export function MultipleCredentialsManager({
   };
 
   const updateCredential = (index: number, field: string, value: any) => {
-    console.log('MultipleCredentialsManager updateCredential called:', { index, field, value });
-    
     const updated = [...currentCredentials];
     const credential = updated[index];
     
@@ -87,7 +85,6 @@ export function MultipleCredentialsManager({
       (credential as any)[field] = value;
     }
     
-    console.log('Calling onUpdate with updated credentials:', updated);
     onUpdate(updated);
   };
 

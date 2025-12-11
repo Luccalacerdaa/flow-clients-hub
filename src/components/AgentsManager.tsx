@@ -64,8 +64,6 @@ export function AgentsManager({
       return;
     }
 
-    console.log('AgentsManager addAgent called');
-
     const agent: Agent = {
       id: `agent-${Date.now()}`,
       name: newAgent.name.trim(),
@@ -77,7 +75,6 @@ export function AgentsManager({
       updatedAt: new Date().toISOString(),
     };
 
-    console.log('Calling onUpdate with new agents:', [...agents, agent]);
     onUpdate([...agents, agent]);
     setNewAgent({ name: "", description: "", prompt: "", isActive: true, priority: 1 });
     setIsAddDialogOpen(false);
@@ -200,10 +197,10 @@ export function AgentsManager({
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={addAgent}>Adicionar Agente</Button>
+                <Button type="button" onClick={addAgent}>Adicionar Agente</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -366,7 +363,7 @@ export function AgentsManager({
             <p className="text-sm text-muted-foreground text-center mb-4">
               Adicione agentes de IA com prompts personalizados para diferentes setores
             </p>
-            <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
+            <Button type="button" onClick={() => setIsAddDialogOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
               Adicionar Primeiro Agente
             </Button>
