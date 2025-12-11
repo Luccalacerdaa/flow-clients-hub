@@ -33,6 +33,7 @@ interface SubscriptionsTableProps {
   subscriptions: SubscriptionWithClient[];
   clientId?: string;
   onAddSubscription?: (subscription: Omit<Subscription, "id" | "createdAt" | "updatedAt">) => void;
+  onAddMultipleSubscriptions?: (subscriptions: Omit<Subscription, "id" | "createdAt" | "updatedAt">[]) => void;
   onEditSubscription?: (id: string, subscriptionData: Partial<Subscription>) => void;
   onDeleteSubscription?: (id: string) => void;
   onMarkAsPaid?: (id: string) => void;
@@ -51,6 +52,7 @@ export function SubscriptionsTable({
   subscriptions,
   clientId,
   onAddSubscription,
+  onAddMultipleSubscriptions,
   onEditSubscription,
   onDeleteSubscription,
   onMarkAsPaid,
@@ -317,12 +319,12 @@ export function SubscriptionsTable({
         </Table>
       </div>
 
-      {onAddSubscription && clientId && (
+        {(onAddSubscription || onAddMultipleSubscriptions) && clientId && (
         <NewSubscriptionDialog
           open={isNewDialogOpen}
           onOpenChange={setIsNewDialogOpen}
           clientId={clientId}
-          onSave={onAddSubscription}
+          onSave={onAddMultipleSubscriptions || ((subs) => subs.forEach(sub => onAddSubscription?.(sub)))}
         />
       )}
 

@@ -10,6 +10,7 @@ interface SubscriptionsContextType {
   isLoading: boolean;
   error: Error | null;
   addSubscription: (subscription: Omit<Subscription, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  addMultipleSubscriptions: (subscriptions: Omit<Subscription, "id" | "createdAt" | "updatedAt">[]) => Promise<void>;
   editSubscription: (id: string, subscriptionData: Partial<Subscription>) => Promise<void>;
   deleteSubscription: (id: string) => Promise<void>;
   markAsPaid: (id: string) => Promise<void>;
@@ -46,6 +47,34 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Erro",
         description: `Erro ao criar mensalidade: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createMultipleMutation = useMutation({
+    mutationFn: async (subscriptions: Omit<Subscription, "id" | "createdAt" | "updatedAt">[]) => {
+      const results = [];
+      for (const subscription of subscriptions) {
+        const result = await subscriptionsService.create(subscription);
+        results.push(result);
+      }
+      return results;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      if (variables.length > 0) {
+        queryClient.invalidateQueries({ queryKey: ["subscriptions", variables[0].clientId] });
+      }
+      toast({
+        title: "Sucesso",
+        description: `${variables.length} mensalidades criadas com sucesso!`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro",
+        description: `Erro ao criar mensalidades: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -130,6 +159,10 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
     await createMutation.mutateAsync(subscription);
   };
 
+  const addMultipleSubscriptions = async (subscriptions: Omit<Subscription, "id" | "createdAt" | "updatedAt">[]) => {
+    await createMultipleMutation.mutateAsync(subscriptions);
+  };
+
   const editSubscription = async (id: string, subscriptionData: Partial<Subscription>) => {
     await updateMutation.mutateAsync({ id, data: subscriptionData });
   };
@@ -149,6 +182,7 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
         isLoading,
         error: error as Error | null,
         addSubscription,
+        addMultipleSubscriptions,
         editSubscription,
         deleteSubscription,
         markAsPaid,

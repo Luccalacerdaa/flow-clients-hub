@@ -21,38 +21,28 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calculator, DollarSign, Calendar, Phone } from "lucide-react";
+import { Calculator, DollarSign, Calendar, Phone, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const newSubscriptionSchema = z.object({
-  // Valores base
+  // Implementação
   implementationValue: z.number().min(0, "Valor deve ser maior ou igual a zero"),
+  implementationStartDate: z.string().min(1, "Data de início é obrigatória"),
+  implementationInstallments: z.number().min(1).max(60),
+  implementationMonthlyValue: z.number().min(0),
+  
+  // Mensalidade
   maintenanceValuePerNumber: z.number().min(0.01, "Valor deve ser maior que zero"),
   numberOfNumbers: z.number().min(1, "Deve ter pelo menos 1 número"),
-  
-  // Configurações de pagamento
-  implementationPaymentType: z.enum(["vista", "parcelado"]),
-  implementationInstallments: z.number().min(1).max(24).optional(),
+  maintenanceStartDate: z.string().min(1, "Data de início é obrigatória"),
   contractDuration: z.number().min(1).max(60).default(12),
-  paymentDay: z.number().min(1).max(31),
+  totalMaintenanceValue: z.number().min(0),
+  totalMonthlyWithImplementation: z.number().min(0),
   
-  // Dados gerais
-  category: z.enum(["Produto", "Serviço", "Plano", "Outro"]).default("Serviço"),
-  description: z.string().optional(),
-  startDate: z.string().min(1, "Data de início é obrigatória"),
-  status: z.enum(["Pendente", "Pago", "Atrasado", "Cancelado", "Pausado"]).default("Pendente"),
-  notes: z.string().optional(),
+  // Controle
+  implementationPaid: z.boolean().default(false),
 });
 
 type NewSubscriptionFormValues = z.infer<typeof newSubscriptionSchema>;
@@ -61,7 +51,7 @@ interface NewSubscriptionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clientId: string;
-  onSave: (subscription: Omit<Subscription, "id" | "createdAt" | "updatedAt">) => void;
+  onSave: (subscriptions: Omit<Subscription, "id" | "createdAt" | "updatedAt">[]) => void;
 }
 
 export function NewSubscriptionDialog({
@@ -71,173 +61,179 @@ export function NewSubscriptionDialog({
   onSave,
 }: NewSubscriptionDialogProps) {
   const [calculatedValues, setCalculatedValues] = useState({
-    monthlyImplementationAmount: 0,
-    monthlyMaintenanceAmount: 0,
-    totalMonthlyAmount: 0,
-    totalContractValue: 0,
+    implementationMonthlyValue: 0,
+    totalMaintenanceValue: 0,
+    totalMonthlyWithImplementation: 0,
   });
 
   const form = useForm<NewSubscriptionFormValues>({
     resolver: zodResolver(newSubscriptionSchema),
     defaultValues: {
-      implementationValue: 0,
-      maintenanceValuePerNumber: 350,
-      numberOfNumbers: 1,
-      implementationPaymentType: "parcelado",
+      implementationValue: 2500,
+      implementationStartDate: "2025-12-15",
       implementationInstallments: 10,
+      implementationMonthlyValue: 0,
+      maintenanceValuePerNumber: 350,
+      numberOfNumbers: 3,
+      maintenanceStartDate: "2026-01-15",
       contractDuration: 12,
-      paymentDay: 10,
-      category: "Serviço",
-      description: "",
-      startDate: new Date().toISOString().split("T")[0],
-      status: "Pendente",
-      notes: "",
+      totalMaintenanceValue: 0,
+      totalMonthlyWithImplementation: 0,
+      implementationPaid: false,
     },
   });
 
   // Watch para recalcular valores automaticamente
   const watchedValues = form.watch([
     "implementationValue",
-    "maintenanceValuePerNumber", 
-    "numberOfNumbers",
-    "implementationPaymentType",
     "implementationInstallments",
-    "contractDuration"
+    "maintenanceValuePerNumber", 
+    "numberOfNumbers"
   ]);
 
   useEffect(() => {
     const [
       implementationValue,
-      maintenanceValuePerNumber,
-      numberOfNumbers,
-      implementationPaymentType,
       implementationInstallments,
-      contractDuration
+      maintenanceValuePerNumber,
+      numberOfNumbers
     ] = watchedValues;
 
-    // Calcular valor mensal de manutenção
-    const monthlyMaintenanceAmount = (maintenanceValuePerNumber || 0) * (numberOfNumbers || 1);
+    // Calcular valor mensal da implementação
+    const implementationMonthlyValue = implementationInstallments > 0 
+      ? (implementationValue || 0) / implementationInstallments 
+      : 0;
     
-    // Calcular valor mensal de implementação
-    let monthlyImplementationAmount = 0;
-    if (implementationPaymentType === "parcelado" && implementationInstallments && implementationValue > 0) {
-      monthlyImplementationAmount = implementationValue / implementationInstallments;
-    }
+    // Calcular valor total de mensalidade
+    const totalMaintenanceValue = (maintenanceValuePerNumber || 0) * (numberOfNumbers || 1);
     
-    // Calcular valor total mensal (durante período de implementação)
-    const totalMonthlyAmount = monthlyMaintenanceAmount + monthlyImplementationAmount;
-    
-    // Calcular valor total do contrato
-    const implementationPeriod = implementationPaymentType === "parcelado" ? (implementationInstallments || 0) : 0;
-    const maintenancePeriod = contractDuration || 12;
-    
-    const totalImplementationValue = implementationValue || 0;
-    const totalMaintenanceValue = monthlyMaintenanceAmount * maintenancePeriod;
-    const totalContractValue = totalImplementationValue + totalMaintenanceValue;
+    // Calcular valor total mensal (com implementação)
+    const totalMonthlyWithImplementation = totalMaintenanceValue + implementationMonthlyValue;
 
     setCalculatedValues({
-      monthlyImplementationAmount,
-      monthlyMaintenanceAmount,
-      totalMonthlyAmount,
-      totalContractValue,
+      implementationMonthlyValue,
+      totalMaintenanceValue,
+      totalMonthlyWithImplementation,
     });
-  }, [watchedValues]);
 
-  const implementationPaymentType = form.watch("implementationPaymentType");
-  const isParcelado = implementationPaymentType === "parcelado";
+    // Atualizar os campos calculados no form
+    form.setValue("implementationMonthlyValue", implementationMonthlyValue);
+    form.setValue("totalMaintenanceValue", totalMaintenanceValue);
+    form.setValue("totalMonthlyWithImplementation", totalMonthlyWithImplementation);
+  }, [watchedValues, form]);
 
   const onSubmit = (values: NewSubscriptionFormValues) => {
-    const startDate = new Date(values.startDate);
-    const firstDueDate = new Date(startDate);
-    firstDueDate.setDate(values.paymentDay);
+    const subscriptions: Omit<Subscription, "id" | "createdAt" | "updatedAt">[] = [];
     
-    // Se o dia já passou no mês atual, vai para o próximo mês
-    if (firstDueDate <= startDate) {
-      firstDueDate.setMonth(firstDueDate.getMonth() + 1);
+    const implementationStartDate = new Date(values.implementationStartDate);
+    const maintenanceStartDate = new Date(values.maintenanceStartDate);
+    
+    // Determinar qual data é mais cedo para começar
+    const startDate = implementationStartDate <= maintenanceStartDate 
+      ? implementationStartDate 
+      : maintenanceStartDate;
+
+    // Criar todas as mensalidades do contrato
+    for (let month = 0; month < values.contractDuration; month++) {
+      const currentDate = new Date(startDate);
+      currentDate.setMonth(currentDate.getMonth() + month);
+      
+      // Verificar se ainda está no período de implementação
+      const implementationEndDate = new Date(implementationStartDate);
+      implementationEndDate.setMonth(implementationEndDate.getMonth() + values.implementationInstallments);
+      
+      const isImplementationPeriod = currentDate < implementationEndDate;
+      
+      // Calcular valor da parcela
+      let monthlyAmount = values.totalMaintenanceValue;
+      if (isImplementationPeriod) {
+        monthlyAmount = values.totalMonthlyWithImplementation;
+      }
+
+      const subscription: Omit<Subscription, "id" | "createdAt" | "updatedAt"> = {
+        clientId,
+        
+        // Valores base
+        implementationValue: values.implementationValue,
+        maintenanceValuePerNumber: values.maintenanceValuePerNumber,
+        numberOfNumbers: values.numberOfNumbers,
+        
+        // Configurações de pagamento
+        implementationPaymentType: "parcelado",
+        implementationInstallments: values.implementationInstallments,
+        contractDuration: values.contractDuration,
+        paymentDay: currentDate.getDate(),
+        
+        // Valores calculados
+        monthlyImplementationAmount: isImplementationPeriod ? values.implementationMonthlyValue : 0,
+        monthlyMaintenanceAmount: values.totalMaintenanceValue,
+        totalMonthlyAmount: monthlyAmount,
+        
+        // Controle de parcelas
+        currentInstallment: month + 1,
+        totalInstallments: values.contractDuration,
+        
+        // Campos existentes (compatibilidade)
+        amount: monthlyAmount,
+        dueDate: currentDate.toISOString().split("T")[0],
+        status: values.implementationPaid && month === 0 ? "Pago" : "Pendente",
+        isRecurring: false, // Não é recorrente pois criamos todas as parcelas
+        recurrenceDay: currentDate.getDate(),
+        category: "Serviço",
+        description: isImplementationPeriod 
+          ? `Mensalidade ${month + 1}/${values.contractDuration} (Manutenção + Implementação)`
+          : `Mensalidade ${month + 1}/${values.contractDuration} (Apenas Manutenção)`,
+        startDate: values.implementationStartDate,
+        isPaused: false,
+        paymentDate: values.implementationPaid && month === 0 ? new Date().toISOString().split("T")[0] : undefined,
+      };
+
+      subscriptions.push(subscription);
     }
 
-    const newSubscription: Omit<Subscription, "id" | "createdAt" | "updatedAt"> = {
-      clientId,
-      
-      // Valores base
-      implementationValue: values.implementationValue,
-      maintenanceValuePerNumber: values.maintenanceValuePerNumber,
-      numberOfNumbers: values.numberOfNumbers,
-      
-      // Configurações de pagamento
-      implementationPaymentType: values.implementationPaymentType,
-      implementationInstallments: isParcelado ? values.implementationInstallments : undefined,
-      contractDuration: values.contractDuration,
-      paymentDay: values.paymentDay,
-      
-      // Valores calculados
-      monthlyImplementationAmount: calculatedValues.monthlyImplementationAmount,
-      monthlyMaintenanceAmount: calculatedValues.monthlyMaintenanceAmount,
-      totalMonthlyAmount: calculatedValues.totalMonthlyAmount,
-      
-      // Controle de parcelas
-      currentInstallment: 1,
-      totalInstallments: values.contractDuration,
-      
-      // Campos existentes (compatibilidade)
-      amount: calculatedValues.totalMonthlyAmount,
-      dueDate: firstDueDate.toISOString().split("T")[0],
-      status: values.status as PaymentStatus,
-      isRecurring: true,
-      recurrenceDay: values.paymentDay,
-      category: values.category as SubscriptionCategory,
-      description: values.description,
-      startDate: values.startDate,
-      isPaused: values.status === "Pausado",
-      notes: values.notes,
-      paymentDate: values.status === "Pago" ? new Date().toISOString().split("T")[0] : undefined,
-    };
-
-    onSave(newSubscription);
+    onSave(subscriptions);
     form.reset();
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Nova Mensalidade
+            Nova Mensalidade - Configuração Completa
           </DialogTitle>
           <DialogDescription>
-            Configure os valores de implementação e manutenção para o cliente.
+            Configure a implementação e mensalidade do cliente. Todas as parcelas serão criadas automaticamente.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             
-            {/* Seção: Valores Base */}
+            {/* Seção: Implementação */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Calculator className="h-4 w-4" />
-                  Valores Base
+                  VALOR DE IMPLEMENTAÇÃO COBRADO
                 </CardTitle>
-                <CardDescription>
-                  Configure os valores de implementação e manutenção
-                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="implementationValue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Valor da Implementação (R$)</FormLabel>
+                        <FormLabel className="text-base font-semibold">Valor Total (R$)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             step="0.01"
-                            placeholder="2500.00"
+                            placeholder="2500"
+                            className="text-lg font-bold"
                             value={field.value === 0 ? "" : field.value}
                             onChange={(e) => {
                               const value = e.target.value;
@@ -257,15 +253,79 @@ export function NewSubscriptionDialog({
 
                   <FormField
                     control={form.control}
+                    name="implementationStartDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold">DATA DE INÍCIO DO PAGAMENTO</FormLabel>
+                        <FormControl>
+                          <Input type="date" className="text-lg" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="implementationInstallments"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold">QUANTIDADE DE PARCELAS NEGOCIADO</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="60"
+                            placeholder="10"
+                            className="text-lg font-bold"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value) || 1)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>Número de vezes que o valor foi parcelado</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-2">
+                    <FormLabel className="text-base font-semibold">VALOR DILUÍDO NA MENSALIDADE</FormLabel>
+                    <div className="p-3 bg-muted rounded-md">
+                      <div className="text-2xl font-bold text-green-600">
+                        R$ {calculatedValues.implementationMonthlyValue.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Seção: Mensalidade */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Phone className="h-4 w-4" />
+                  MENSALIDADE
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
                     name="maintenanceValuePerNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Manutenção por Número (R$)</FormLabel>
+                        <FormLabel className="text-base font-semibold">Valor por Número (R$)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             step="0.01"
-                            placeholder="350.00"
+                            placeholder="350"
+                            className="text-lg font-bold"
                             value={field.value === 0 ? "" : field.value}
                             onChange={(e) => {
                               const value = e.target.value;
@@ -278,6 +338,7 @@ export function NewSubscriptionDialog({
                             }}
                           />
                         </FormControl>
+                        <FormDescription>350 POR NÚMERO</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -288,15 +349,13 @@ export function NewSubscriptionDialog({
                     name="numberOfNumbers"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          Quantidade de Números
-                        </FormLabel>
+                        <FormLabel className="text-base font-semibold">QUANTIDADE DE NÚMEROS</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             min="1"
                             placeholder="3"
+                            className="text-lg font-bold"
                             {...field}
                             onChange={(e) =>
                               field.onChange(parseInt(e.target.value) || 1)
@@ -308,98 +367,17 @@ export function NewSubscriptionDialog({
                     )}
                   />
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Seção: Forma de Pagamento */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Calendar className="h-4 w-4" />
-                  Forma de Pagamento
-                </CardTitle>
-                <CardDescription>
-                  Configure como será o pagamento da implementação
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="implementationPaymentType"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>Pagamento da Implementação</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex flex-col space-y-1"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="vista" id="vista" />
-                            <Label htmlFor="vista">À Vista</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="parcelado" id="parcelado" />
-                            <Label htmlFor="parcelado">Parcelado na Mensalidade</Label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {isParcelado && (
-                    <FormField
-                      control={form.control}
-                      name="implementationInstallments"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Parcelas da Implementação</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="1"
-                              max="24"
-                              placeholder="10"
-                              {...field}
-                              onChange={(e) =>
-                                field.onChange(parseInt(e.target.value) || undefined)
-                              }
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Em quantas parcelas dividir a implementação
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="contractDuration"
+                    name="maintenanceStartDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Duração do Contrato (meses)</FormLabel>
+                        <FormLabel className="text-base font-semibold">DATA DE INÍCIO DO PAGAMENTO</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="60"
-                            placeholder="12"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value) || 12)
-                            }
-                          />
+                          <Input type="date" className="text-lg" {...field} />
                         </FormControl>
-                        <FormDescription>
-                          Vigência total do contrato
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -407,25 +385,23 @@ export function NewSubscriptionDialog({
 
                   <FormField
                     control={form.control}
-                    name="paymentDay"
+                    name="contractDuration"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Dia do Vencimento</FormLabel>
+                        <FormLabel className="text-base font-semibold">VIGÊNCIA (meses)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             min="1"
-                            max="31"
-                            placeholder="10"
+                            max="60"
+                            placeholder="12"
+                            className="text-lg font-bold"
                             {...field}
                             onChange={(e) =>
-                              field.onChange(parseInt(e.target.value) || 10)
+                              field.onChange(parseInt(e.target.value) || 12)
                             }
                           />
                         </FormControl>
-                        <FormDescription>
-                          Todo dia 10, 15, 20, etc.
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -435,153 +411,77 @@ export function NewSubscriptionDialog({
             </Card>
 
             {/* Seção: Resumo Financeiro */}
-            <Card className="bg-muted/50">
+            <Card className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20">
               <CardHeader>
-                <CardTitle className="text-lg">💰 Resumo Financeiro</CardTitle>
+                <CardTitle className="text-xl">💰 RESUMO FINANCEIRO</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Manutenção Mensal:</span>
-                      <span className="font-medium">
-                        R$ {calculatedValues.monthlyMaintenanceAmount.toFixed(2)}
-                      </span>
-                    </div>
-                    {isParcelado && calculatedValues.monthlyImplementationAmount > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Implementação Mensal:</span>
-                        <span className="font-medium">
-                          R$ {calculatedValues.monthlyImplementationAmount.toFixed(2)}
-                        </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border">
+                      <div className="text-sm font-medium text-muted-foreground">VALOR TOTAL DE MENSALIDADE</div>
+                      <div className="text-3xl font-bold text-blue-600">
+                        R$ {calculatedValues.totalMaintenanceValue.toFixed(2)}
                       </div>
-                    )}
-                    <div className="flex justify-between border-t pt-2">
-                      <span className="font-medium">Total Mensal:</span>
-                      <span className="font-bold text-lg">
-                        R$ {calculatedValues.totalMonthlyAmount.toFixed(2)}
-                      </span>
+                    </div>
+                    
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border">
+                      <div className="text-sm font-medium text-muted-foreground">VALOR MENSAL COM IMPLEMENTAÇÃO</div>
+                      <div className="text-3xl font-bold text-green-600">
+                        R$ {calculatedValues.totalMonthlyWithImplementation.toFixed(2)}
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Valor Total do Contrato:</span>
-                      <span className="font-bold text-green-600">
-                        R$ {calculatedValues.totalContractValue.toFixed(2)}
-                      </span>
-                    </div>
-                    {isParcelado && form.watch("implementationInstallments") && (
-                      <div className="text-xs text-muted-foreground">
-                        * Implementação será cobrada por {form.watch("implementationInstallments")} meses,
-                        depois apenas manutenção (R$ {calculatedValues.monthlyMaintenanceAmount.toFixed(2)}/mês)
+
+                  <div className="space-y-3">
+                    <div className="text-sm space-y-2">
+                      <div className="flex justify-between">
+                        <span>Implementação mensal:</span>
+                        <span className="font-medium">R$ {calculatedValues.implementationMonthlyValue.toFixed(2)}</span>
                       </div>
-                    )}
+                      <div className="flex justify-between">
+                        <span>Manutenção total:</span>
+                        <span className="font-medium">R$ {calculatedValues.totalMaintenanceValue.toFixed(2)}</span>
+                      </div>
+                      <div className="border-t pt-2 flex justify-between font-bold">
+                        <span>Total com implementação:</span>
+                        <span>R$ {calculatedValues.totalMonthlyWithImplementation.toFixed(2)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-muted-foreground bg-yellow-50 dark:bg-yellow-950/20 p-3 rounded">
+                      <strong>Cronograma:</strong><br />
+                      • Primeiros {form.watch("implementationInstallments")} meses: R$ {calculatedValues.totalMonthlyWithImplementation.toFixed(2)}<br />
+                      • Últimos {form.watch("contractDuration") - form.watch("implementationInstallments")} meses: R$ {calculatedValues.totalMaintenanceValue.toFixed(2)}
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Seção: Dados Gerais */}
+            {/* Seção: Controle */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Dados Gerais</CardTitle>
+                <CardTitle className="text-lg">Controle de Pagamento</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Categoria</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione a categoria" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Produto">Produto</SelectItem>
-                            <SelectItem value="Serviço">Serviço</SelectItem>
-                            <SelectItem value="Plano">Plano</SelectItem>
-                            <SelectItem value="Outro">Outro</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="startDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data de Início</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
+              <CardContent>
                 <FormField
                   control={form.control}
-                  name="description"
+                  name="implementationPaid"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrição (opcional)</FormLabel>
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-semibold">O cliente pagou este valor?</FormLabel>
+                        <FormDescription>
+                          Se marcado, este valor entrará automaticamente no Relatório Financeiro
+                        </FormDescription>
+                      </div>
                       <FormControl>
-                        <Textarea
-                          placeholder="Descreva os serviços incluídos..."
-                          {...field}
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
                         />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status Inicial</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Pendente">Pendente</SelectItem>
-                          <SelectItem value="Pago">Pago</SelectItem>
-                          <SelectItem value="Atrasado">Atrasado</SelectItem>
-                          <SelectItem value="Pausado">Pausado</SelectItem>
-                          <SelectItem value="Cancelado">Cancelado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Observações</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Observações adicionais..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -599,7 +499,9 @@ export function NewSubscriptionDialog({
               >
                 Cancelar
               </Button>
-              <Button type="submit">Criar Mensalidade</Button>
+              <Button type="submit" className="bg-green-600 hover:bg-green-700">
+                Criar Todas as Mensalidades ({form.watch("contractDuration")} parcelas)
+              </Button>
             </DialogFooter>
           </form>
         </Form>

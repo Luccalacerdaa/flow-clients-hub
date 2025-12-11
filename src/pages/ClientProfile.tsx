@@ -30,7 +30,7 @@ export default function ClientProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { editClient, deleteClient } = useClients();
-  const { addSubscription, editSubscription, deleteSubscription, markAsPaid } = useSubscriptions();
+  const { addSubscription, addMultipleSubscriptions, editSubscription, deleteSubscription, markAsPaid } = useSubscriptions();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -260,6 +260,7 @@ export default function ClientProfile() {
                     subscriptions={clientSubscriptions}
                     clientId={client.id}
                     onAddSubscription={addSubscription}
+                    onAddMultipleSubscriptions={addMultipleSubscriptions}
                     onEditSubscription={editSubscription}
                     onDeleteSubscription={deleteSubscription}
                     onMarkAsPaid={markAsPaid}
