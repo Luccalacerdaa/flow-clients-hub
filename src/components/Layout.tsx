@@ -124,15 +124,15 @@ export function Layout({ children }: LayoutProps) {
                     <span className="sr-only">Abrir menu</span>
                   </Button>
                 </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-0">
-                <div className="flex h-16 items-center gap-3 border-b border-border px-6">
-                  <FlowTechLogo size="sm" />
-                </div>
-                <nav className="p-4 space-y-1">
-                  <NavLinks />
-                </nav>
-              </SheetContent>
-            </Sheet>
+                <SheetContent side="left" className="w-64 p-0">
+                  <div className="flex h-16 items-center gap-3 border-b border-border px-6">
+                    <FlowTechLogo size="sm" />
+                  </div>
+                  <nav className="p-4 space-y-1">
+                    <NavLinks />
+                  </nav>
+                </SheetContent>
+              </Sheet>
           </div>
         </header>
       )}
