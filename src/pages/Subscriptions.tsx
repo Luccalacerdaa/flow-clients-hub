@@ -3,6 +3,7 @@ import { Layout } from "@/components/Layout";
 import { SubscriptionsTable } from "@/components/SubscriptionsTable";
 import { AddClientWithSubscriptionDialog } from "@/components/AddClientWithSubscriptionDialog";
 import { useSubscriptions } from "@/contexts/SubscriptionsContext";
+import { useClients } from "@/contexts/ClientsContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { subscriptionsService } from "@/services/subscriptionsService";
 import { clientsService } from "@/services/clientsService";
@@ -13,11 +14,32 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Subscription, SubscriptionCategory, PaymentMethod } from "@/types/subscription";
 import { Client } from "@/types/client";
 import { toast } from "@/hooks/use-toast";
+import { NewSubscriptionDialog } from "@/components/NewSubscriptionDialog";
+import { NewClientDialog } from "@/components/NewClientDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function Subscriptions() {
   const queryClient = useQueryClient();
-  const { subscriptions, isLoading, addSubscription, editSubscription, deleteSubscription, markAsPaid } = useSubscriptions();
+  const { subscriptions, isLoading, addMultipleSubscriptions, editSubscription, deleteSubscription, markAsPaid } = useSubscriptions();
+  const { addClient } = useClients();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false);
+  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
 
   // Buscar informações dos clientes para exibir nomes
   const { data: clients = [] } = useQuery({
@@ -35,82 +57,47 @@ export default function Subscriptions() {
     };
   });
 
-  const handleAddClientWithSubscription = async (data: {
-    clientId: string;
-    initialPayment: {
-      amount: number;
-      description: string;
-      paid: boolean;
-      installments: number;
-      paymentMethod?: PaymentMethod;
-      paymentDate?: string;
-    };
-    subscription: {
-      amount: number;
-      recurrenceDay: number;
-      activateRecurrence: boolean;
-      category: SubscriptionCategory;
-    };
-  }) => {
+  const handleNewClient = async (clientData: any) => {
     try {
-      const today = new Date();
-      const dueDate = new Date(today.getFullYear(), today.getMonth(), data.subscription.recurrenceDay);
-      
-      // Se o dia já passou este mês, ir para o próximo mês
-      if (dueDate < today) {
-        dueDate.setMonth(dueDate.getMonth() + 1);
-      }
-
-      // Criar mensalidade
-      const subscription: Omit<Subscription, "id" | "createdAt" | "updatedAt"> = {
-        clientId: data.clientId,
-        amount: data.subscription.amount,
-        category: data.subscription.category,
-        description: data.initialPayment.description,
-        startDate: today.toISOString().split("T")[0],
-        dueDate: dueDate.toISOString().split("T")[0],
-        status: "Pendente",
-        isRecurring: data.subscription.activateRecurrence,
-        recurrenceDay: data.subscription.recurrenceDay,
-        currentInstallment: 1,
-        isPaused: false,
-        initialPaymentAmount: data.initialPayment.amount > 0 ? data.initialPayment.amount : undefined,
-        initialPaymentPaid: data.initialPayment.paid,
-      };
-
-      // Criar a mensalidade
-      const createdSubscription = await subscriptionsService.create(subscription);
-
-      // Se o pagamento inicial foi marcado como pago, registrar no histórico
-      // Isso fará com que o valor apareça automaticamente no relatório financeiro
-      if (data.initialPayment.paid && data.initialPayment.amount > 0) {
-        const paymentNotes = `Pagamento inicial (${data.initialPayment.installments}x): ${data.initialPayment.description}`;
-        
-        await paymentHistoryService.create({
-          subscriptionId: createdSubscription.id,
-          amount: data.initialPayment.amount,
-          paymentDate: data.initialPayment.paymentDate || today.toISOString().split("T")[0],
-          paymentMethod: data.initialPayment.paymentMethod || "Outro",
-          notes: paymentNotes,
-        });
-      }
-
-      // Se a recorrência está ativa, a primeira mensalidade já foi criada acima
-      // As próximas serão criadas automaticamente quando marcar como pago
-
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      const newClient = await addClient(clientData);
+      setSelectedClientId(newClient.id);
+      setIsNewClientDialogOpen(false);
+      setIsSubscriptionDialogOpen(true);
       
       toast({
         title: "Sucesso",
-        description: "Cliente e mensalidade criados com sucesso!",
+        description: "Cliente criado! Agora configure a mensalidade.",
       });
-
-      setIsAddDialogOpen(false);
     } catch (error: any) {
       toast({
         title: "Erro",
-        description: `Erro ao criar: ${error.message}`,
+        description: `Erro ao criar cliente: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSelectExistingClient = () => {
+    if (selectedClientId) {
+      setIsAddDialogOpen(false);
+      setIsSubscriptionDialogOpen(true);
+    }
+  };
+
+  const handleSubscriptionCreated = async (subscriptions: Omit<Subscription, "id" | "createdAt" | "updatedAt">[]) => {
+    try {
+      await addMultipleSubscriptions(subscriptions);
+      setIsSubscriptionDialogOpen(false);
+      setSelectedClientId("");
+      
+      toast({
+        title: "Sucesso",
+        description: `${subscriptions.length} mensalidades criadas com sucesso!`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: `Erro ao criar mensalidades: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -157,10 +144,84 @@ export default function Subscriptions() {
           onMarkAsPaid={markAsPaid}
         />
 
-        <AddClientWithSubscriptionDialog
-          open={isAddDialogOpen}
-          onOpenChange={setIsAddDialogOpen}
-          onSave={handleAddClientWithSubscription}
+        {/* Dialog para selecionar cliente ou criar novo */}
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Adicionar Cliente + Mensalidade</DialogTitle>
+              <DialogDescription>
+                Cadastre uma nova venda e configure a mensalidade recorrente do cliente
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Selecionar Cliente</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Escolha um cliente existente ou crie um novo
+                </p>
+                
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um cliente existente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((client: Client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.fullName} - {client.companyName || "Sem empresa"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsAddDialogOpen(false);
+                      setIsNewClientDialogOpen(true);
+                    }}
+                  >
+                    Novo Cliente
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleSelectExistingClient}
+                disabled={!selectedClientId}
+              >
+                Continuar com Cliente Selecionado
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para criar novo cliente */}
+        <NewClientDialog
+          open={isNewClientDialogOpen}
+          onOpenChange={setIsNewClientDialogOpen}
+          onSave={handleNewClient}
+        />
+
+        {/* Dialog para criar mensalidade */}
+        <NewSubscriptionDialog
+          open={isSubscriptionDialogOpen}
+          onOpenChange={(open) => {
+            setIsSubscriptionDialogOpen(open);
+            if (!open) {
+              setSelectedClientId("");
+            }
+          }}
+          clientId={selectedClientId}
+          onSave={handleSubscriptionCreated}
         />
       </div>
     </Layout>

@@ -1,8 +1,9 @@
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, ReactNode, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Subscription } from "@/types/subscription";
 import { subscriptionsService } from "@/services/subscriptionsService";
 import { paymentHistoryService } from "@/services/paymentHistoryService";
+import { notificationService, PaymentNotificationData, OverduePayment } from "@/services/notificationService";
 import { toast } from "@/hooks/use-toast";
 
 interface SubscriptionsContextType {
@@ -61,11 +62,30 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
       }
       return results;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (createdSubscriptions, variables) => {
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
       if (variables.length > 0) {
         queryClient.invalidateQueries({ queryKey: ["subscriptions", variables[0].clientId] });
       }
+      
+      // Agendar notificações para os pagamentos criados
+      if (notificationService.isNotificationEnabled()) {
+        createdSubscriptions.forEach((subscription) => {
+          // Buscar nome do cliente (você pode ajustar isso conforme sua estrutura)
+          const clientName = "Cliente"; // Idealmente buscar do contexto de clientes
+          
+          const notificationData: PaymentNotificationData = {
+            clientName,
+            amount: subscription.amount,
+            dueDate: subscription.dueDate,
+            subscriptionId: subscription.id,
+            clientId: subscription.clientId
+          };
+          
+          notificationService.schedulePaymentNotification(notificationData);
+        });
+      }
+      
       toast({
         title: "Sucesso",
         description: `${variables.length} mensalidades criadas com sucesso!`,
@@ -141,6 +161,13 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
       queryClient.invalidateQueries({ queryKey: ["subscription", data.id] });
       queryClient.invalidateQueries({ queryKey: ["paymentHistory"] });
       queryClient.invalidateQueries({ queryKey: ["allPaymentHistory"] });
+      
+      // Mostrar notificação de pagamento recebido
+      if (notificationService.isNotificationEnabled()) {
+        const clientName = "Cliente"; // Idealmente buscar do contexto de clientes
+        notificationService.showPaymentReceivedNotification(clientName, data.amount);
+      }
+      
       toast({
         title: "Sucesso",
         description: "Mensalidade marcada como paga e registrada no relatório!",
