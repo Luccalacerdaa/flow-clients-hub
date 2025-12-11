@@ -57,6 +57,7 @@ interface EditClientDialogProps {
 export function EditClientDialog({ open, onOpenChange, client, onSave }: EditClientDialogProps) {
   const [numberCredentials, setNumberCredentials] = useState<NumberCredentials[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [currentNumberOfPhones, setCurrentNumberOfPhones] = useState(1);
   
   const form = useForm<EditClientFormValues>({
     resolver: zodResolver(editClientSchema),
@@ -87,6 +88,9 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
       const emails = client.emails?.map(email => ({ value: email })) || [];
       const phones = client.phones?.map(phone => ({ value: phone })) || [];
 
+      const numberOfPhones = client.numberOfPhones || 1;
+      setCurrentNumberOfPhones(numberOfPhones);
+      
       form.reset({
         fullName: client.fullName,
         companyName: client.companyName,
@@ -95,7 +99,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
         status: client.status,
         emails,
         phones,
-        numberOfPhones: client.numberOfPhones || 1,
+        numberOfPhones,
       });
 
       // Inicializar credenciais por número
@@ -260,20 +264,21 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
                             onChange={(e) => {
                               const newCount = parseInt(e.target.value) || 1;
                               field.onChange(newCount);
+                              setCurrentNumberOfPhones(newCount);
                               
                               // Ajustar credenciais por número
                               const updatedCredentials = [...numberCredentials];
                               
                               // Adicionar credenciais se aumentou
                               while (updatedCredentials.length < newCount) {
-                              updatedCredentials.push({
-                                id: `number-${updatedCredentials.length + 1}`,
-                                phoneNumber: "",
-                                instanceName: `instancia-${updatedCredentials.length + 1}`,
-                                displayName: `Número ${updatedCredentials.length + 1}`,
-                                description: "",
-                                agents: [],
-                              });
+                                updatedCredentials.push({
+                                  id: `number-${updatedCredentials.length + 1}`,
+                                  phoneNumber: "",
+                                  instanceName: `instancia-${updatedCredentials.length + 1}`,
+                                  displayName: `Número ${updatedCredentials.length + 1}`,
+                                  description: "",
+                                  agents: [],
+                                });
                               }
                               
                               // Remover credenciais se diminuiu
@@ -407,7 +412,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
               <TabsContent value="number-credentials" className="space-y-4">
                 <MultipleCredentialsManager
                   credentials={numberCredentials}
-                  numberOfPhones={form.watch("numberOfPhones")}
+                  numberOfPhones={currentNumberOfPhones}
                   onUpdate={setNumberCredentials}
                   isEditing={true}
                 />

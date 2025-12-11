@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Eye, EyeOff, Plus, Trash2, Phone } from "lucide-react";
+import { Copy, Eye, EyeOff, Plus, Trash2, Phone, Edit3, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -37,6 +37,7 @@ export function MultipleCredentialsManager({
 }: MultipleCredentialsManagerProps) {
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState("0");
+  const [editingFields, setEditingFields] = useState<Record<string, boolean>>({});
 
   // Garantir que temos credenciais para todos os números
   const ensureCredentials = () => {
@@ -69,6 +70,14 @@ export function MultipleCredentialsManager({
 
   const togglePasswordVisibility = (field: string) => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const toggleFieldEditing = (fieldKey: string) => {
+    setEditingFields((prev) => ({ ...prev, [fieldKey]: !prev[fieldKey] }));
+  };
+
+  const isFieldEditing = (fieldKey: string) => {
+    return editingFields[fieldKey] || false;
   };
 
   const updateCredential = (index: number, field: string, value: any) => {
@@ -222,26 +231,74 @@ export function MultipleCredentialsManager({
                     </div>
                     <div className="space-y-2">
                       <Label>Nome de Identificação</Label>
-                      {isEditing ? (
-                        <Input
-                          value={credential.displayName || ""}
-                          onChange={(e) => updateCredential(index, "displayName", e.target.value)}
-                          placeholder="Ex: Vendas, Suporte, Marketing"
-                        />
+                      {isEditing || isFieldEditing(`displayName-${index}`) ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={credential.displayName || ""}
+                            onChange={(e) => updateCredential(index, "displayName", e.target.value)}
+                            placeholder="Ex: Vendas, Suporte, Marketing"
+                            onBlur={() => toggleFieldEditing(`displayName-${index}`)}
+                            autoFocus={isFieldEditing(`displayName-${index}`)}
+                          />
+                          {!isEditing && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => toggleFieldEditing(`displayName-${index}`)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       ) : (
-                        <Input value={credential.displayName || "Não informado"} readOnly />
+                        <div className="flex items-center gap-2">
+                          <Input value={credential.displayName || "Não informado"} readOnly />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => toggleFieldEditing(`displayName-${index}`)}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       )}
                     </div>
                     <div className="space-y-2">
                       <Label>Descrição do Uso</Label>
-                      {isEditing ? (
-                        <Input
-                          value={credential.description || ""}
-                          onChange={(e) => updateCredential(index, "description", e.target.value)}
-                          placeholder="Para que será usado este número"
-                        />
+                      {isEditing || isFieldEditing(`description-${index}`) ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={credential.description || ""}
+                            onChange={(e) => updateCredential(index, "description", e.target.value)}
+                            placeholder="Para que será usado este número"
+                            onBlur={() => toggleFieldEditing(`description-${index}`)}
+                            autoFocus={isFieldEditing(`description-${index}`)}
+                          />
+                          {!isEditing && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => toggleFieldEditing(`description-${index}`)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       ) : (
-                        <Input value={credential.description || "Não informado"} readOnly />
+                        <div className="flex items-center gap-2">
+                          <Input value={credential.description || "Não informado"} readOnly />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => toggleFieldEditing(`description-${index}`)}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
