@@ -138,7 +138,7 @@ export function MultipleCredentialsManager({
             {currentCredentials.slice(0, 4).map((cred, index) => (
               <TabsTrigger key={cred.id} value={index.toString()} className="gap-2">
                 <Phone className="h-3 w-3" />
-                {cred.phoneNumber || `Número ${index + 1}`}
+                {cred.displayName || cred.phoneNumber || `Número ${index + 1}`}
               </TabsTrigger>
             ))}
             {currentCredentials.length > 4 && (
@@ -154,10 +154,16 @@ export function MultipleCredentialsManager({
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         <Phone className="h-4 w-4" />
-                        {credential.phoneNumber || `Número ${index + 1}`}
+                        {credential.displayName || credential.phoneNumber || `Número ${index + 1}`}
                       </CardTitle>
                       <CardDescription>
-                        Instância: {credential.instanceName}
+                        {credential.phoneNumber && credential.displayName && (
+                          <div>{credential.phoneNumber}</div>
+                        )}
+                        <div>Instância: {credential.instanceName}</div>
+                        {credential.description && (
+                          <div className="text-xs text-muted-foreground mt-1">{credential.description}</div>
+                        )}
                       </CardDescription>
                     </div>
                     {isEditing && currentCredentials.length > 1 && (
@@ -211,6 +217,30 @@ export function MultipleCredentialsManager({
                         />
                       ) : (
                         <Input value={credential.instanceName} readOnly />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Nome de Identificação</Label>
+                      {isEditing ? (
+                        <Input
+                          value={credential.displayName || ""}
+                          onChange={(e) => updateCredential(index, "displayName", e.target.value)}
+                          placeholder="Ex: Vendas, Suporte, Marketing"
+                        />
+                      ) : (
+                        <Input value={credential.displayName || "Não informado"} readOnly />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Descrição do Uso</Label>
+                      {isEditing ? (
+                        <Input
+                          value={credential.description || ""}
+                          onChange={(e) => updateCredential(index, "description", e.target.value)}
+                          placeholder="Para que será usado este número"
+                        />
+                      ) : (
+                        <Input value={credential.description || "Não informado"} readOnly />
                       )}
                     </div>
                   </div>
@@ -359,6 +389,160 @@ export function MultipleCredentialsManager({
                                 variant="outline"
                                 size="icon"
                                 onClick={() => copyToClipboard(credential.evolution?.apiKey || "", "API Key")}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Supabase */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 items-center justify-center rounded bg-green-600 text-white text-xs font-semibold">
+                        SB
+                      </div>
+                      <h4 className="font-semibold">Supabase</h4>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <Label>Project URL</Label>
+                        {isEditing ? (
+                          <Input
+                            value={credential.supabase?.projectUrl || ""}
+                            onChange={(e) => updateCredential(index, "supabase.projectUrl", e.target.value)}
+                            placeholder="https://xxx.supabase.co"
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Input value={credential.supabase?.projectUrl || ""} readOnly />
+                            {credential.supabase?.projectUrl && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => copyToClipboard(credential.supabase?.projectUrl || "", "Project URL")}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Anon Key</Label>
+                        {isEditing ? (
+                          <Input
+                            value={credential.supabase?.anonKey || ""}
+                            onChange={(e) => updateCredential(index, "supabase.anonKey", e.target.value)}
+                            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Input value={credential.supabase?.anonKey || ""} readOnly className="font-mono text-sm" />
+                            {credential.supabase?.anonKey && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => copyToClipboard(credential.supabase?.anonKey || "", "Anon Key")}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Service Role Key (Opcional)</Label>
+                        {isEditing ? (
+                          <Input
+                            value={credential.supabase?.serviceRoleKey || ""}
+                            onChange={(e) => updateCredential(index, "supabase.serviceRoleKey", e.target.value)}
+                            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Input value={credential.supabase?.serviceRoleKey || ""} readOnly className="font-mono text-sm" />
+                            {credential.supabase?.serviceRoleKey && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => copyToClipboard(credential.supabase?.serviceRoleKey || "", "Service Role Key")}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ChatGPT */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 items-center justify-center rounded bg-gray-800 text-white text-xs font-semibold">
+                        AI
+                      </div>
+                      <h4 className="font-semibold">ChatGPT</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>API Key</Label>
+                        {isEditing ? (
+                          <Input
+                            type={showPasswords[`chatgpt-${index}`] ? "text" : "password"}
+                            value={credential.chatgpt?.apiKey || ""}
+                            onChange={(e) => updateCredential(index, "chatgpt.apiKey", e.target.value)}
+                            placeholder="sk-..."
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type={showPasswords[`chatgpt-${index}`] ? "text" : "password"}
+                              value={credential.chatgpt?.apiKey || ""}
+                              readOnly
+                              className="font-mono text-sm"
+                            />
+                            {credential.chatgpt?.apiKey && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => togglePasswordVisibility(`chatgpt-${index}`)}
+                                >
+                                  {showPasswords[`chatgpt-${index}`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => copyToClipboard(credential.chatgpt?.apiKey || "", "API Key")}
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Organization ID (Opcional)</Label>
+                        {isEditing ? (
+                          <Input
+                            value={credential.chatgpt?.organizationId || ""}
+                            onChange={(e) => updateCredential(index, "chatgpt.organizationId", e.target.value)}
+                            placeholder="org-..."
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Input value={credential.chatgpt?.organizationId || ""} readOnly />
+                            {credential.chatgpt?.organizationId && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => copyToClipboard(credential.chatgpt?.organizationId || "", "Organization ID")}
                               >
                                 <Copy className="h-4 w-4" />
                               </Button>

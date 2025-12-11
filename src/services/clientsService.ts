@@ -22,7 +22,6 @@ interface ClientRow {
   monthly_contract_value: number | null;
   number_of_phones?: number | null;
   number_credentials: any;
-  general_credentials: any;
   infra_credentials: any;
   created_at: string;
   updated_at: string;
@@ -54,7 +53,6 @@ function dbToClient(row: ClientRow): Client {
     monthlyContractValue: row.monthly_contract_value ? Number(row.monthly_contract_value) : undefined,
     numberOfPhones: row.number_of_phones || undefined,
     numberCredentials: row.number_credentials || undefined,
-    generalCredentials: row.general_credentials || undefined,
     infraCredentials: row.infra_credentials || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -88,7 +86,6 @@ function clientToDb(client: Partial<Client>): Partial<ClientRow> {
   if (client.monthlyContractValue !== undefined) dbClient.monthly_contract_value = client.monthlyContractValue || null;
   if (client.numberOfPhones !== undefined) dbClient.number_of_phones = client.numberOfPhones || null;
   if (client.numberCredentials !== undefined) dbClient.number_credentials = client.numberCredentials || null;
-  if (client.generalCredentials !== undefined) dbClient.general_credentials = client.generalCredentials || null;
   if (client.infraCredentials !== undefined) dbClient.infra_credentials = client.infraCredentials || null;
   
   return dbClient;

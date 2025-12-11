@@ -271,22 +271,9 @@ export default function ClientProfile() {
 
           {/* Credenciais */}
           <TabsContent value="credentials" className="space-y-6">
-            {/* Credenciais Gerais */}
-            {client.generalCredentials && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Credenciais Gerais</h3>
-                <CredentialsSection 
-                  credentials={client.generalCredentials}
-                  isEditing={false}
-                  onUpdate={() => {}}
-                />
-              </div>
-            )}
-
             {/* Credenciais por Número */}
-            {client.numberCredentials && client.numberCredentials.length > 0 && (
+            {client.numberCredentials && client.numberCredentials.length > 0 ? (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Credenciais por Número</h3>
                 <MultipleCredentialsManager
                   credentials={client.numberCredentials}
                   numberOfPhones={client.numberOfPhones || 1}
@@ -294,10 +281,8 @@ export default function ClientProfile() {
                   isEditing={false}
                 />
               </div>
-            )}
-
-            {/* Credenciais Antigas (Compatibilidade) */}
-            {client.infraCredentials && !client.numberCredentials && (
+            ) : client.infraCredentials ? (
+              /* Credenciais Antigas (Compatibilidade) */
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Credenciais da Infraestrutura (Sistema Antigo)</h3>
                 <CredentialsSection 
@@ -306,13 +291,11 @@ export default function ClientProfile() {
                   onUpdate={() => {}}
                 />
               </div>
-            )}
-
-            {/* Caso não tenha credenciais */}
-            {!client.generalCredentials && !client.numberCredentials && !client.infraCredentials && (
+            ) : (
+              /* Caso não tenha credenciais */
               <div className="text-center py-8 text-muted-foreground">
                 <p>Nenhuma credencial cadastrada ainda.</p>
-                <p>Edite o cliente para adicionar credenciais.</p>
+                <p>Edite o cliente para adicionar credenciais por número.</p>
               </div>
             )}
           </TabsContent>

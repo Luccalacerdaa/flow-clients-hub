@@ -6,6 +6,8 @@ export interface NumberCredentials {
   id: string;
   phoneNumber: string; // Número do WhatsApp (ex: +5511999999999)
   instanceName: string; // Nome da instância (ex: cliente-numero-1)
+  displayName?: string; // Nome amigável para identificação (ex: "Vendas", "Suporte", "Marketing")
+  description?: string; // Descrição do uso deste número
   
   // Credenciais específicas para este número
   n8n?: {
@@ -31,6 +33,18 @@ export interface NumberCredentials {
   chatgpt?: {
     apiKey: string;
     organizationId?: string;
+  };
+  // Novas credenciais por número
+  typebot?: {
+    apiUrl: string;
+    apiKey: string;
+  };
+  make?: {
+    apiKey: string;
+    organizationId?: string;
+  };
+  zapier?: {
+    apiKey: string;
   };
   notes?: string;
 }
@@ -132,11 +146,8 @@ export interface Client {
   // Quantidade de números solicitados
   numberOfPhones?: number;
   
-  // Credenciais por número (novo sistema)
+  // Credenciais por número (cada número tem suas próprias credenciais)
   numberCredentials?: NumberCredentials[];
-  
-  // Credenciais gerais (compartilhadas)
-  generalCredentials?: GeneralCredentials;
   
   // Credenciais da infraestrutura (compatibilidade - será removido)
   infraCredentials?: InfraCredentials;

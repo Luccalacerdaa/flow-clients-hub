@@ -43,11 +43,6 @@ const editClientSchema = z.object({
   emails: z.array(z.object({ value: z.string().email("Email inválido") })).optional(),
   phones: z.array(z.object({ value: z.string().min(10, "Telefone inválido") })).optional(),
   numberOfPhones: z.number().min(1, "Deve ter pelo menos 1 número").max(10, "Máximo 10 números"),
-  supabaseUrl: z.string().optional(),
-  supabaseAnonKey: z.string().optional(),
-  supabaseServiceKey: z.string().optional(),
-  chatgptApiKey: z.string().optional(),
-  chatgptOrgId: z.string().optional(),
 });
 
 type EditClientFormValues = z.infer<typeof editClientSchema>;
@@ -73,11 +68,6 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
       emails: [],
       phones: [],
       numberOfPhones: 1,
-      supabaseUrl: "",
-      supabaseAnonKey: "",
-      supabaseServiceKey: "",
-      chatgptApiKey: "",
-      chatgptOrgId: "",
     },
   });
 
@@ -105,11 +95,6 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
         emails,
         phones,
         numberOfPhones: client.numberOfPhones || 1,
-        supabaseUrl: client.generalCredentials?.supabase?.projectUrl || client.infraCredentials?.supabase?.projectUrl || "",
-        supabaseAnonKey: client.generalCredentials?.supabase?.anonKey || client.infraCredentials?.supabase?.anonKey || "",
-        supabaseServiceKey: client.generalCredentials?.supabase?.serviceRoleKey || client.infraCredentials?.supabase?.serviceRoleKey || "",
-        chatgptApiKey: client.generalCredentials?.chatgpt?.apiKey || client.infraCredentials?.chatgpt?.apiKey || "",
-        chatgptOrgId: client.generalCredentials?.chatgpt?.organizationId || client.infraCredentials?.chatgpt?.organizationId || "",
       });
 
       // Inicializar credenciais por número
@@ -125,6 +110,8 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
             id: `number-${i + 1}`,
             phoneNumber: "",
             instanceName: `instancia-${i + 1}`,
+            displayName: `Número ${i + 1}`,
+            description: "",
           };
 
           // Se é o primeiro número e temos credenciais antigas, migrar
@@ -151,24 +138,6 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
     const emails = values.emails?.map(e => e.value).filter(Boolean) || [];
     const phones = values.phones?.map(p => p.value).filter(Boolean) || [];
 
-    // Credenciais gerais (compartilhadas)
-    const generalCredentials: Client["generalCredentials"] = {};
-    
-    if (values.supabaseUrl || values.supabaseAnonKey) {
-      generalCredentials.supabase = {
-        projectUrl: values.supabaseUrl || "",
-        anonKey: values.supabaseAnonKey || "",
-        serviceRoleKey: values.supabaseServiceKey,
-      };
-    }
-
-    if (values.chatgptApiKey) {
-      generalCredentials.chatgpt = {
-        apiKey: values.chatgptApiKey || "",
-        organizationId: values.chatgptOrgId,
-      };
-    }
-
     const updatedClient: Client = {
       ...client,
       fullName: values.fullName,
@@ -180,7 +149,6 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
       status: values.status as ClientStatus,
       numberOfPhones: values.numberOfPhones,
       numberCredentials,
-      generalCredentials: Object.keys(generalCredentials).length > 0 ? generalCredentials : undefined,
       updatedAt: new Date().toISOString(),
     };
 
@@ -203,10 +171,9 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="basic">Dados Básicos</TabsTrigger>
                 <TabsTrigger value="contacts">Contatos</TabsTrigger>
-                <TabsTrigger value="general-credentials">Credenciais Gerais</TabsTrigger>
                 <TabsTrigger value="number-credentials">Credenciais por Número</TabsTrigger>
               </TabsList>
 
@@ -424,94 +391,6 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
                 </div>
               </TabsContent>
 
-              <TabsContent value="general-credentials" className="space-y-4">
-                <div className="space-y-4">
-                  <div className="text-sm text-muted-foreground">
-                    <p>Estas credenciais serão compartilhadas entre todos os números do cliente.</p>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="border-b pb-2">
-                      <h4 className="font-semibold">Supabase</h4>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="supabaseUrl"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Project URL</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://xxx.supabase.co" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="supabaseAnonKey"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Anon Key</FormLabel>
-                            <FormControl>
-                              <Input placeholder="eyJhbGci..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="supabaseServiceKey"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Service Role Key (opcional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="eyJhbGci..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="border-b pb-2">
-                      <h4 className="font-semibold">ChatGPT</h4>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="chatgptApiKey"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>API Key</FormLabel>
-                            <FormControl>
-                              <Input type="password" placeholder="sk-..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="chatgptOrgId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Organization ID (opcional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="org-xxx" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
 
               <TabsContent value="number-credentials" className="space-y-4">
                 <MultipleCredentialsManager
