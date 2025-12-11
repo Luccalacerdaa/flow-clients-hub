@@ -112,6 +112,7 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
             instanceName: `instancia-${i + 1}`,
             displayName: `Número ${i + 1}`,
             description: "",
+            agents: [],
           };
 
           // Se é o primeiro número e temos credenciais antigas, migrar
@@ -257,11 +258,14 @@ export function EditClientDialog({ open, onOpenChange, client, onSave }: EditCli
                               
                               // Adicionar credenciais se aumentou
                               while (updatedCredentials.length < newCount) {
-                                updatedCredentials.push({
-                                  id: `number-${updatedCredentials.length + 1}`,
-                                  phoneNumber: "",
-                                  instanceName: `instancia-${updatedCredentials.length + 1}`,
-                                });
+                              updatedCredentials.push({
+                                id: `number-${updatedCredentials.length + 1}`,
+                                phoneNumber: "",
+                                instanceName: `instancia-${updatedCredentials.length + 1}`,
+                                displayName: `Número ${updatedCredentials.length + 1}`,
+                                description: "",
+                                agents: [],
+                              });
                               }
                               
                               // Remover credenciais se diminuiu

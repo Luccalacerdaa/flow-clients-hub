@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NumberCredentials } from "@/types/client";
 import { Button } from "@/components/ui/button";
+import { AgentsManager } from "./AgentsManager";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -553,9 +554,19 @@ export function MultipleCredentialsManager({
                     </div>
                   </div>
 
+                  {/* Agentes de IA */}
+                  <div className="space-y-4">
+                    <AgentsManager
+                      agents={credential.agents || []}
+                      onUpdate={(agents) => updateCredential(index, "agents", agents)}
+                      isEditing={isEditing}
+                      numberDisplayName={credential.displayName || credential.phoneNumber || `Número ${index + 1}`}
+                    />
+                  </div>
+
                   {/* Observações */}
                   <div className="space-y-2">
-                    <Label>Observações</Label>
+                    <Label>Observações Gerais</Label>
                     {isEditing ? (
                       <Textarea
                         value={credential.notes || ""}

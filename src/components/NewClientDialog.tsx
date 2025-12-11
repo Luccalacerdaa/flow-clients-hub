@@ -91,6 +91,7 @@ export function NewClientDialog({ open, onOpenChange, onSave }: NewClientDialogP
         instanceName: `instancia-${i + 1}`,
         displayName: `Número ${i + 1}`,
         description: "",
+        agents: [],
       });
     }
 

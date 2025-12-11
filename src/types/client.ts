@@ -1,6 +1,18 @@
 export type ClientStatus = "Lead" | "Ativo" | "Pausado" | "Encerrado";
 export type CompanySize = "Pequena" | "Média" | "Grande";
 
+// Interface para agentes/setores com prompts personalizados
+export interface Agent {
+  id: string;
+  name: string; // Nome do agente/setor (ex: "Vendas", "Suporte", "Financeiro")
+  description?: string; // Descrição do que o agente faz
+  prompt: string; // Prompt personalizado do agente
+  isActive: boolean; // Se o agente está ativo
+  priority?: number; // Prioridade do agente (1 = mais alta)
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Credenciais para um número específico
 export interface NumberCredentials {
   id: string;
@@ -8,6 +20,9 @@ export interface NumberCredentials {
   instanceName: string; // Nome da instância (ex: cliente-numero-1)
   displayName?: string; // Nome amigável para identificação (ex: "Vendas", "Suporte", "Marketing")
   description?: string; // Descrição do uso deste número
+  
+  // Agentes/setores com prompts personalizados
+  agents?: Agent[];
   
   // Credenciais específicas para este número
   n8n?: {
